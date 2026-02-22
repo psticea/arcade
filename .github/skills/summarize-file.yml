@@ -1,0 +1,13 @@
+name: summarize-file
+description: Reads a file and returns a concise summary of its contents, including its purpose and key components.
+parameters:
+  - name: file_path
+    type: string
+    description: The relative path to the file to summarize.
+    required: true
+instructions: |
+  Given the file at `{{file_path}}`, provide a brief summary that includes:
+  1. The file's primary purpose.
+  2. Key functions, classes, or exports it defines.
+  3. Any notable dependencies or side effects.
+  Keep the summary under 150 words.
