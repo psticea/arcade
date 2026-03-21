@@ -10,12 +10,29 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  actions: read
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Configure Pages for GitHub Actions deployment
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl -sL \
+            -X PUT \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${{ github.repository }}/pages" \
+            -d '{"build_type":"workflow"}'
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -34,5 +51,23 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - name: Wait for any branch-based deployment to finish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Checking for competing deployments..."
+          for i in $(seq 1 18); do
+            FOUND=$(curl -s \
+              -H "Authorization: Bearer $GITHUB_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${{ github.repository }}/actions/runs?head_sha=${{ github.sha }}&status=in_progress" \
+              | jq '[.workflow_runs[] | select(.name == "pages build and deployment")] | length')
+            if [ "$FOUND" = "0" ] || [ -z "$FOUND" ]; then
+              echo "No competing deployment in progress"
+              break
+            fi
+            echo "Competing deployment in progress, waiting... (attempt $i)"
+            sleep 10
+          done
       - id: deployment
         uses: actions/deploy-pages@v4
