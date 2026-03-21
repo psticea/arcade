@@ -32,7 +32,11 @@ export function GameCanvas({ onGameOver }: GameCanvasProps) {
     if (!container) return
 
     const updateSize = () => {
-      setCanvasSize({ width: container.clientWidth, height: container.clientHeight })
+      const width = container.clientWidth
+      const height = container.clientHeight
+      if (width > 0 && height > 0) {
+        setCanvasSize({ width, height })
+      }
     }
 
     updateSize()
