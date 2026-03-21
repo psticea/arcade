@@ -2,31 +2,30 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { spawnWord, updateWords, findMatchingWord, resetRecentWords, type FallingWord } from '../game/wordManager.ts'
 import type { DifficultyConfig } from '../game/difficulty.ts'
 
-const easyConfig: DifficultyConfig = {
-  minWordLength: 3,
-  maxWordLength: 4,
+const baseConfig: DifficultyConfig = {
   spawnIntervalMs: 2500,
-  fallSpeed: 28,
+  minFallSpeed: 25,
+  maxFallSpeed: 30,
   maxWordsOnScreen: 4,
-  tier: 'easy',
 }
 
 describe('spawnWord', () => {
   beforeEach(() => resetRecentWords())
 
   it('creates a word with correct initial properties', () => {
-    const word = spawnWord(1, 800, easyConfig)
+    const word = spawnWord(1, 800, baseConfig)
     expect(word.id).toBe(1)
-    expect(word.text.length).toBeGreaterThanOrEqual(3)
-    expect(word.text.length).toBeLessThanOrEqual(4)
+    expect(word.text.length).toBeGreaterThanOrEqual(1)
+    expect(word.text.length).toBeLessThanOrEqual(10)
     expect(word.y).toBe(-30)
-    expect(word.speed).toBe(28)
+    expect(word.speed).toBeGreaterThanOrEqual(baseConfig.minFallSpeed)
+    expect(word.speed).toBeLessThanOrEqual(baseConfig.maxFallSpeed)
     expect(word.matchedChars).toBe(0)
     expect(word.targeted).toBe(false)
   })
 
   it('positions word within canvas bounds', () => {
-    const word = spawnWord(1, 800, easyConfig)
+    const word = spawnWord(1, 800, baseConfig)
     expect(word.x).toBeGreaterThanOrEqual(0)
     expect(word.x).toBeLessThan(800)
   })
