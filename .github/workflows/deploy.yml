@@ -56,6 +56,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Checking for competing deployments..."
+          # Wait up to 3 minutes (18 attempts × 10s) for any branch-based deployment to finish
           for i in $(seq 1 18); do
             FOUND=$(curl -s \
               -H "Authorization: Bearer $GITHUB_TOKEN" \
