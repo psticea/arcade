@@ -2,3 +2,4 @@ node_modules
 dist
 *.local
 _setup*.cjs
+tsconfig.tsbuildinfo
