@@ -55,19 +55,23 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "Checking for competing deployments..."
-          # Wait up to 3 minutes (18 attempts × 10s) for any branch-based deployment to finish
-          for i in $(seq 1 18); do
-            FOUND=$(curl -s \
+          echo "Waiting for competing Jekyll deployments to complete..."
+          # The Jekyll "pages build and deployment" workflow starts at the same time as ours.
+          # Its build+deploy typically takes 30-35s. Sleep first so we deploy after it finishes.
+          sleep 30
+          # Then poll until no "pages build and deployment" runs are still active.
+          # Up to 12 attempts × 10s = 2 more minutes, for a total max wait of ~2.5 minutes.
+          for i in $(seq 1 12); do
+            ACTIVE=$(curl -s \
               -H "Authorization: Bearer $GITHUB_TOKEN" \
               -H "Accept: application/vnd.github+json" \
-              "https://api.github.com/repos/${{ github.repository }}/actions/runs?head_sha=${{ github.sha }}&status=in_progress" \
-              | jq '[.workflow_runs[] | select(.name == "pages build and deployment")] | length')
-            if [ "$FOUND" = "0" ] || [ -z "$FOUND" ]; then
-              echo "No competing deployment in progress"
+              "https://api.github.com/repos/${{ github.repository }}/actions/runs?head_sha=${{ github.sha }}" \
+              | jq '[.workflow_runs[] | select(.name == "pages build and deployment" and .status != "completed")] | length')
+            if [ "$ACTIVE" = "0" ] || [ -z "$ACTIVE" ]; then
+              echo "No competing deployment still active"
               break
             fi
-            echo "Competing deployment in progress, waiting... (attempt $i)"
+            echo "Competing deployment still active, waiting... (attempt $i)"
             sleep 10
           done
       - id: deployment
