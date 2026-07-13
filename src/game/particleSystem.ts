@@ -10,10 +10,10 @@ export interface Particle {
   maxLife: number
 }
 
-const NEON_COLORS = ['#00fff2', '#ff00ff', '#ffff00', '#00ff88', '#ff4466', '#aa66ff']
+const PARTICLE_COLORS = ['#e7d796', '#d8e0d8', '#b96858', '#8aa3ad']
 
 export function spawnExplosion(x: number, y: number, wordLength: number): Particle[] {
-  const count = 20 + wordLength * 4
+  const count = 12 + wordLength * 2
   const particles: Particle[] = []
 
   for (let i = 0; i < count; i++) {
@@ -28,7 +28,7 @@ export function spawnExplosion(x: number, y: number, wordLength: number): Partic
       vy: Math.sin(angle) * speed,
       alpha: 1,
       size: 2 + Math.random() * 5,
-      color: NEON_COLORS[Math.floor(Math.random() * NEON_COLORS.length)] ?? '#00fff2',
+      color: PARTICLE_COLORS[Math.floor(Math.random() * PARTICLE_COLORS.length)] ?? '#e7d796',
       life,
       maxLife: life,
     })

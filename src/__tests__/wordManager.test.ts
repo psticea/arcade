@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { spawnWord, updateWords, findMatchingWord, resetRecentWords, type FallingWord } from '../game/wordManager.ts'
 import type { DifficultyConfig } from '../game/difficulty.ts'
+import romanianWords from '../data/words-ro.json'
 
 const baseConfig: DifficultyConfig = {
   spawnIntervalMs: 2500,
@@ -28,6 +29,19 @@ describe('spawnWord', () => {
     const word = spawnWord(1, 800, baseConfig)
     expect(word.x).toBeGreaterThanOrEqual(0)
     expect(word.x).toBeLessThan(800)
+  })
+
+  it('spawns Romanian words from the Romanian pool', () => {
+    const word = spawnWord(1, 800, baseConfig, 'romanian')
+    expect(romanianWords).toContain(word.text)
+  })
+
+  it('keeps every Romanian word lowercase and ASCII-only', () => {
+    expect(romanianWords.length).toBeGreaterThan(200)
+    expect(new Set(romanianWords).size).toBe(romanianWords.length)
+    for (const word of romanianWords) {
+      expect(word).toMatch(/^[a-z]+$/)
+    }
   })
 })
 

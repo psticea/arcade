@@ -4,11 +4,11 @@ import type { Particle } from './particleSystem.ts'
 const GRID_SPACING = 64
 
 export function renderBackground(ctx: CanvasRenderingContext2D, w: number, h: number, time: number): void {
-  ctx.fillStyle = '#2368e8'
+  ctx.fillStyle = '#42647a'
   ctx.fillRect(0, 0, w, h)
 
-  ctx.strokeStyle = 'rgba(17, 17, 17, 0.14)'
-  ctx.lineWidth = 2
+  ctx.strokeStyle = 'rgba(247, 247, 243, 0.09)'
+  ctx.lineWidth = 1
   const offset = (time * 10) % GRID_SPACING
 
   for (let y = offset; y < h; y += GRID_SPACING) {
@@ -41,23 +41,23 @@ export function renderWords(ctx: CanvasRenderingContext2D, words: FallingWord[])
 
     ctx.shadowColor = 'transparent'
     ctx.shadowBlur = 0
-    ctx.fillStyle = '#111111'
-    ctx.fillRect(word.x + 5, word.y + 5, tileWidth, tileHeight)
-    ctx.fillStyle = word.targeted ? '#f7df25' : '#ffffff'
+    ctx.fillStyle = 'rgba(29, 41, 48, 0.38)'
+    ctx.fillRect(word.x + 3, word.y + 3, tileWidth, tileHeight)
+    ctx.fillStyle = word.targeted ? '#e7d796' : '#f7f7f3'
     ctx.fillRect(word.x, word.y, tileWidth, tileHeight)
-    ctx.strokeStyle = '#111111'
-    ctx.lineWidth = 3
+    ctx.strokeStyle = '#1d2930'
+    ctx.lineWidth = 2
     ctx.strokeRect(word.x, word.y, tileWidth, tileHeight)
 
     if (word.matchedChars > 0) {
-      ctx.fillStyle = '#2368e8'
+      ctx.fillStyle = '#b05f50'
       ctx.fillText(matched, word.x + paddingX, word.y + paddingY)
 
       const matchedWidth = ctx.measureText(matched).width
-      ctx.fillStyle = '#111111'
+      ctx.fillStyle = '#1d2930'
       ctx.fillText(remaining, word.x + paddingX + matchedWidth, word.y + paddingY)
     } else {
-      ctx.fillStyle = '#111111'
+      ctx.fillStyle = '#1d2930'
       ctx.fillText(word.text, word.x + paddingX, word.y + paddingY)
     }
   }
@@ -66,8 +66,8 @@ export function renderWords(ctx: CanvasRenderingContext2D, words: FallingWord[])
 export function renderParticles(ctx: CanvasRenderingContext2D, particles: Particle[]): void {
   for (const p of particles) {
     ctx.globalAlpha = p.alpha
-    ctx.shadowColor = p.color
-    ctx.shadowBlur = 12
+    ctx.shadowColor = 'transparent'
+    ctx.shadowBlur = 0
     ctx.fillStyle = p.color
     ctx.beginPath()
     ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2)
@@ -79,8 +79,8 @@ export function renderParticles(ctx: CanvasRenderingContext2D, particles: Partic
 }
 
 export function renderDangerZone(ctx: CanvasRenderingContext2D, w: number, h: number): void {
-  ctx.fillStyle = '#f24d32'
+  ctx.fillStyle = '#b96858'
   ctx.fillRect(0, h - 58, w, 58)
-  ctx.fillStyle = '#111111'
-  ctx.fillRect(0, h - 58, w, 4)
+  ctx.fillStyle = '#1d2930'
+  ctx.fillRect(0, h - 58, w, 2)
 }

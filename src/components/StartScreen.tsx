@@ -1,18 +1,20 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { DifficultyTier } from '../game/difficulty.ts'
+import type { GameLanguage } from '../game/wordManager.ts'
 
 interface StartScreenProps {
-  onStart: (difficulty: DifficultyTier) => void
+  onStart: (difficulty: DifficultyTier, language: GameLanguage) => void
 }
 
 export function StartScreen({ onStart }: StartScreenProps) {
   const [difficulty, setDifficulty] = useState<DifficultyTier>('easy')
+  const [language, setLanguage] = useState<GameLanguage>('english')
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      if (e.key === 'Enter') onStart(difficulty)
+      if (e.key === 'Enter') onStart(difficulty, language)
     },
-    [difficulty, onStart],
+    [difficulty, language, onStart],
   )
 
   useEffect(() => {
@@ -25,6 +27,25 @@ export function StartScreen({ onStart }: StartScreenProps) {
       <div className="screen-content">
         <h1 className="game-title">WORD<span className="title-accent">FALL</span></h1>
         <p className="game-subtitle">Type the falling words before they reach the bottom</p>
+        <fieldset className="language-picker">
+          <legend>Word language</legend>
+          <div className="language-options">
+            {([
+              ['english', 'English'],
+              ['romanian', 'Romana'],
+            ] as const).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                className="language-option"
+                aria-pressed={language === value}
+                onClick={() => setLanguage(value)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </fieldset>
         <fieldset className="difficulty-picker">
           <legend>Choose starting difficulty</legend>
           <div className="difficulty-options">
@@ -48,7 +69,7 @@ export function StartScreen({ onStart }: StartScreenProps) {
           <div className="instruction-item">Build combos for bonus points</div>
           <div className="instruction-item">3 lives - miss a word and lose one</div>
         </div>
-        <button className="start-button" onClick={() => onStart(difficulty)}>
+        <button className="start-button" onClick={() => onStart(difficulty, language)}>
           PRESS ENTER TO START
         </button>
       </div>

@@ -2,7 +2,13 @@
 import { useGameLoop } from '../hooks/useGameLoop.ts'
 import { createInitialState, type GameState } from '../game/gameState.ts'
 import { getDifficulty, getLevel, type DifficultyTier } from '../game/difficulty.ts'
-import { spawnWord, updateWords, findMatchingWord, resetRecentWords } from '../game/wordManager.ts'
+import {
+  spawnWord,
+  updateWords,
+  findMatchingWord,
+  resetRecentWords,
+  type GameLanguage,
+} from '../game/wordManager.ts'
 import { spawnExplosion, updateParticles } from '../game/particleSystem.ts'
 import { renderBackground, renderWords, renderParticles, renderDangerZone } from '../game/renderer.ts'
 import { calculateScore, getMissedPenalty } from '../game/scoring.ts'
@@ -12,10 +18,11 @@ import '../styles/theme.css'
 
 interface GameCanvasProps {
   startingDifficulty: DifficultyTier
+  language: GameLanguage
   onGameOver: (state: GameState) => void
 }
 
-export function GameCanvas({ startingDifficulty, onGameOver }: GameCanvasProps) {
+export function GameCanvas({ startingDifficulty, language, onGameOver }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const stateRef = useRef<GameState>(createInitialState())
@@ -29,9 +36,9 @@ export function GameCanvas({ startingDifficulty, onGameOver }: GameCanvasProps) 
   const [canvasSize, setCanvasSize] = useState({ width: window.innerWidth, height: window.innerHeight })
 
   useEffect(() => {
-    resetRecentWords()
+    resetRecentWords(language)
     stateRef.current = createInitialState()
-  }, [])
+  }, [language])
 
   useLayoutEffect(() => {
     const container = containerRef.current
@@ -68,7 +75,7 @@ export function GameCanvas({ startingDifficulty, onGameOver }: GameCanvasProps) 
       // Spawn words
       const timeSinceSpawn = (elapsed - state.lastSpawnTime) * 1000
       if (timeSinceSpawn >= difficulty.spawnIntervalMs && state.words.length < difficulty.maxWordsOnScreen) {
-        state.words.push(spawnWord(state.nextWordId++, canvas.width, difficulty))
+        state.words.push(spawnWord(state.nextWordId++, canvas.width, difficulty, language))
         state.lastSpawnTime = elapsed
       }
 
@@ -118,7 +125,7 @@ export function GameCanvas({ startingDifficulty, onGameOver }: GameCanvasProps) 
       // Update HUD (throttled by React batching)
       setHudState({ score: state.score, combo: state.combo, lives: state.lives, level: state.level })
     },
-    [onGameOver, startingDifficulty],
+    [language, onGameOver, startingDifficulty],
   )
 
   useGameLoop(gameLoop, stateRef.current.status === 'playing')

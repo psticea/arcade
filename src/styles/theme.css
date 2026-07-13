@@ -456,11 +456,11 @@ body,
 
 /* ===== Primary Blocks Theme ===== */
 :root {
-  --block-blue: #2368e8;
-  --block-yellow: #f7df25;
-  --block-red: #f24d32;
-  --block-black: #111111;
-  --block-white: #ffffff;
+  --block-blue: #42647a;
+  --block-yellow: #e7d796;
+  --block-red: #b96858;
+  --block-black: #1d2930;
+  --block-white: #f7f7f3;
   --bg-primary: var(--block-blue);
   --bg-glass: var(--block-white);
   --neon-cyan: var(--block-blue);
@@ -489,21 +489,21 @@ input {
 .screen {
   padding: 28px;
   overflow: auto;
-  background-color: var(--block-blue);
+  background-color: #d9e0e2;
   background-image:
-    linear-gradient(rgba(17, 17, 17, 0.1) 2px, transparent 2px),
-    linear-gradient(90deg, rgba(17, 17, 17, 0.1) 2px, transparent 2px);
-  background-size: 64px 64px;
+    linear-gradient(rgba(29, 41, 48, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(29, 41, 48, 0.045) 1px, transparent 1px);
+  background-size: 80px 80px;
 }
 
 .screen-content {
   width: min(960px, 100%);
   max-width: none;
   padding: 36px;
-  border: 4px solid var(--block-black);
+  border: 2px solid var(--block-black);
   border-radius: 0;
   background: var(--block-yellow);
-  box-shadow: 12px 12px 0 var(--block-black);
+  box-shadow: 5px 5px 0 rgba(29, 41, 48, 0.28);
   text-align: left;
 }
 
@@ -511,8 +511,8 @@ input {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
   grid-template-areas:
-    "title difficulty"
-    "subtitle difficulty"
+    "title language"
+    "subtitle language"
     "instructions difficulty"
     "instructions start";
   gap: 14px 28px;
@@ -522,7 +522,7 @@ input {
   grid-area: title;
   margin: 0;
   color: var(--block-black);
-  font-size: 82px;
+  font-size: 74px;
   line-height: 0.82;
   letter-spacing: 0;
   text-wrap: balance;
@@ -531,7 +531,7 @@ input {
 .title-accent {
   display: block;
   color: var(--block-red);
-  text-shadow: 5px 5px 0 var(--block-black);
+  text-shadow: none;
 }
 
 .game-subtitle {
@@ -543,62 +543,79 @@ input {
   font-weight: 700;
 }
 
+.language-picker,
 .difficulty-picker {
-  grid-area: difficulty;
   align-self: stretch;
   margin: 0;
-  padding: 24px;
-  border: 4px solid var(--block-black);
-  background: var(--block-red);
+  padding: 20px;
+  border: 2px solid var(--block-black);
+  background: #eef0ec;
 }
 
+.language-picker {
+  grid-area: language;
+  align-self: end;
+}
+
+.difficulty-picker {
+  grid-area: difficulty;
+  background: #ead9d4;
+}
+
+.language-picker legend,
 .difficulty-picker legend {
   width: auto;
   margin: 0;
   padding: 0 8px;
   color: var(--block-black);
-  background: var(--block-yellow);
+  background: var(--block-white);
   font-family: var(--font-body);
   font-size: 14px;
   font-weight: 900;
   letter-spacing: 0;
 }
 
+.language-options,
 .difficulty-options {
+  display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
 }
 
+.language-option,
 .difficulty-option {
   padding: 14px 8px;
-  border: 3px solid var(--block-black);
+  border: 2px solid var(--block-black);
   border-radius: 0;
   background: var(--block-white);
   color: var(--block-black);
   font-family: var(--font-body);
   font-size: 12px;
-  box-shadow: 4px 4px 0 var(--block-black);
+  box-shadow: 2px 2px 0 rgba(29, 41, 48, 0.32);
   transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
 }
 
+.language-option:hover,
 .difficulty-option:hover {
   border-color: var(--block-black);
   color: var(--block-black);
-  transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0 var(--block-black);
+  transform: none;
+  box-shadow: 2px 2px 0 rgba(29, 41, 48, 0.32);
 }
 
+.language-option[aria-pressed='true'],
 .difficulty-option[aria-pressed='true'] {
   border-color: var(--block-black);
   background: var(--block-blue);
   color: var(--block-white);
-  box-shadow: 4px 4px 0 var(--block-black);
+  box-shadow: 2px 2px 0 rgba(29, 41, 48, 0.32);
 }
 
+.language-option:focus-visible,
 .difficulty-option:focus-visible,
 .start-button:focus-visible,
 .input-field:focus-visible {
-  outline: 4px solid var(--block-white);
+  outline: 3px solid var(--block-blue);
   outline-offset: 3px;
 }
 
@@ -614,9 +631,9 @@ input {
   gap: 0;
   align-self: end;
   margin: 0;
-  border: 3px solid var(--block-black);
+  border: 2px solid var(--block-black);
   background: var(--block-white);
-  box-shadow: 6px 6px 0 var(--block-black);
+  box-shadow: 3px 3px 0 rgba(29, 41, 48, 0.24);
 }
 
 .instruction-item {
@@ -637,7 +654,7 @@ input {
   grid-area: start;
   width: 100%;
   padding: 17px 20px;
-  border: 4px solid var(--block-black);
+  border: 2px solid var(--block-black);
   border-radius: 0;
   background: var(--block-black);
   color: var(--block-white);
@@ -645,18 +662,19 @@ input {
   font-size: 15px;
   font-weight: 900;
   letter-spacing: 0;
-  box-shadow: 6px 6px 0 var(--block-red);
+  box-shadow: 3px 3px 0 rgba(29, 41, 48, 0.28);
   transition: transform 0.16s ease, box-shadow 0.16s ease;
 }
 
 .start-button:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 8px 8px 0 var(--block-red);
+  transform: none;
+  background: #2c3b43;
+  box-shadow: 3px 3px 0 rgba(29, 41, 48, 0.28);
 }
 
 .start-button:active {
   transform: translate(4px, 4px);
-  box-shadow: 2px 2px 0 var(--block-red);
+  box-shadow: none;
 }
 
 .hud {
@@ -674,9 +692,9 @@ input {
 .hud-lives {
   min-height: 62px;
   padding: 8px 12px;
-  border: 3px solid var(--block-black);
+  border: 2px solid var(--block-black);
   background: var(--block-white);
-  box-shadow: 4px 4px 0 var(--block-black);
+  box-shadow: 2px 2px 0 rgba(29, 41, 48, 0.3);
 }
 
 .hud-level {
@@ -734,21 +752,21 @@ input {
 .input-field {
   width: min(760px, 100%);
   padding: 15px 18px;
-  border: 4px solid var(--block-black);
+  border: 2px solid var(--block-black);
   border-radius: 0;
   background: var(--block-white);
   color: var(--block-black);
   font-family: var(--font-body);
   font-size: 19px;
   font-weight: 900;
-  box-shadow: 7px 7px 0 var(--block-black);
+  box-shadow: 3px 3px 0 rgba(29, 41, 48, 0.35);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
 
 .input-field:focus {
   border-color: var(--block-black);
-  box-shadow: 7px 7px 0 var(--block-yellow);
+  box-shadow: 0 0 0 3px rgba(231, 215, 150, 0.75);
 }
 
 .input-field::placeholder {
@@ -756,7 +774,7 @@ input {
 }
 
 .gameover-screen {
-  background-color: var(--block-red);
+  background-color: #d9e0e2;
 }
 
 .gameover-screen .screen-content {
@@ -773,16 +791,16 @@ input {
   font-size: 72px;
   line-height: 0.9;
   letter-spacing: 0;
-  text-shadow: 5px 5px 0 var(--block-white);
+  text-shadow: none;
 }
 
 .final-score {
   justify-content: center;
   margin: 0;
   padding: 20px;
-  border: 4px solid var(--block-black);
+  border: 2px solid var(--block-black);
   background: var(--block-blue);
-  box-shadow: 6px 6px 0 var(--block-black);
+  box-shadow: 3px 3px 0 rgba(29, 41, 48, 0.3);
 }
 
 .final-score-label,
@@ -796,7 +814,7 @@ input {
 .final-score-value {
   color: var(--block-white);
   font-size: 54px;
-  text-shadow: 4px 4px 0 var(--block-black);
+  text-shadow: none;
 }
 
 .stats-grid {
@@ -856,6 +874,7 @@ input {
     grid-template-areas:
       "title"
       "subtitle"
+      "language"
       "difficulty"
       "instructions"
       "start";
@@ -865,6 +884,7 @@ input {
     font-size: 58px;
   }
 
+  .language-picker,
   .difficulty-picker {
     padding: 18px;
   }
