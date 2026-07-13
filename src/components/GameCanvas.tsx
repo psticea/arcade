@@ -20,7 +20,12 @@ export function GameCanvas({ startingDifficulty, onGameOver }: GameCanvasProps) 
   const containerRef = useRef<HTMLDivElement>(null)
   const stateRef = useRef<GameState>(createInitialState())
   const inputRef = useRef('')
-  const [hudState, setHudState] = useState({ score: 0, combo: 0, lives: 3, level: 0 })
+  const [hudState, setHudState] = useState({
+    score: 0,
+    combo: 0,
+    lives: 3,
+    level: getLevel(0, startingDifficulty),
+  })
   const [canvasSize, setCanvasSize] = useState({ width: window.innerWidth, height: window.innerHeight })
 
   useEffect(() => {

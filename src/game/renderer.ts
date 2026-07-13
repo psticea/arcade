@@ -1,16 +1,15 @@
 ﻿import type { FallingWord } from './wordManager.ts'
 import type { Particle } from './particleSystem.ts'
 
-const GRID_SPACING = 60
-const GRID_ALPHA = 0.06
+const GRID_SPACING = 64
 
 export function renderBackground(ctx: CanvasRenderingContext2D, w: number, h: number, time: number): void {
-  ctx.fillStyle = '#0a0a1a'
+  ctx.fillStyle = '#2368e8'
   ctx.fillRect(0, 0, w, h)
 
-  ctx.strokeStyle = `rgba(0, 255, 242, ${GRID_ALPHA})`
-  ctx.lineWidth = 1
-  const offset = (time * 8) % GRID_SPACING
+  ctx.strokeStyle = 'rgba(17, 17, 17, 0.14)'
+  ctx.lineWidth = 2
+  const offset = (time * 10) % GRID_SPACING
 
   for (let y = offset; y < h; y += GRID_SPACING) {
     ctx.beginPath()
@@ -29,32 +28,38 @@ export function renderBackground(ctx: CanvasRenderingContext2D, w: number, h: nu
 export function renderWords(ctx: CanvasRenderingContext2D, words: FallingWord[]): void {
   for (const word of words) {
     const fontSize = 22
-    ctx.font = `700 ${fontSize}px 'Inter', sans-serif`
+    const paddingX = 10
+    const paddingY = 7
+    ctx.font = `900 ${fontSize}px Arial, sans-serif`
     ctx.textBaseline = 'top'
 
     const matched = word.text.slice(0, word.matchedChars)
     const remaining = word.text.slice(word.matchedChars)
-
-    if (word.matchedChars > 0) {
-      ctx.shadowColor = '#00fff2'
-      ctx.shadowBlur = 16
-      ctx.fillStyle = '#00fff2'
-      ctx.fillText(matched, word.x, word.y)
-
-      const matchedWidth = ctx.measureText(matched).width
-      ctx.shadowColor = 'transparent'
-      ctx.shadowBlur = 0
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.95)'
-      ctx.fillText(remaining, word.x + matchedWidth, word.y)
-    } else {
-      ctx.shadowColor = 'rgba(255, 255, 255, 0.3)'
-      ctx.shadowBlur = 8
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.85)'
-      ctx.fillText(word.text, word.x, word.y)
-    }
+    const textWidth = ctx.measureText(word.text).width
+    const tileWidth = textWidth + paddingX * 2
+    const tileHeight = fontSize + paddingY * 2
 
     ctx.shadowColor = 'transparent'
     ctx.shadowBlur = 0
+    ctx.fillStyle = '#111111'
+    ctx.fillRect(word.x + 5, word.y + 5, tileWidth, tileHeight)
+    ctx.fillStyle = word.targeted ? '#f7df25' : '#ffffff'
+    ctx.fillRect(word.x, word.y, tileWidth, tileHeight)
+    ctx.strokeStyle = '#111111'
+    ctx.lineWidth = 3
+    ctx.strokeRect(word.x, word.y, tileWidth, tileHeight)
+
+    if (word.matchedChars > 0) {
+      ctx.fillStyle = '#2368e8'
+      ctx.fillText(matched, word.x + paddingX, word.y + paddingY)
+
+      const matchedWidth = ctx.measureText(matched).width
+      ctx.fillStyle = '#111111'
+      ctx.fillText(remaining, word.x + paddingX + matchedWidth, word.y + paddingY)
+    } else {
+      ctx.fillStyle = '#111111'
+      ctx.fillText(word.text, word.x + paddingX, word.y + paddingY)
+    }
   }
 }
 
@@ -74,9 +79,8 @@ export function renderParticles(ctx: CanvasRenderingContext2D, particles: Partic
 }
 
 export function renderDangerZone(ctx: CanvasRenderingContext2D, w: number, h: number): void {
-  const gradient = ctx.createLinearGradient(0, h - 80, 0, h)
-  gradient.addColorStop(0, 'rgba(255, 0, 50, 0)')
-  gradient.addColorStop(1, 'rgba(255, 0, 50, 0.15)')
-  ctx.fillStyle = gradient
-  ctx.fillRect(0, h - 80, w, 80)
+  ctx.fillStyle = '#f24d32'
+  ctx.fillRect(0, h - 58, w, 58)
+  ctx.fillStyle = '#111111'
+  ctx.fillRect(0, h - 58, w, 4)
 }
