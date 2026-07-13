@@ -13,12 +13,11 @@ export interface FallingWord {
 
 const usedRecently = new Set<string>()
 const MAX_RECENT = 40
+const allWords = [...new Set([...words.easy, ...words.medium, ...words.hard, ...words.expert])]
 
-function pickWord(tier: DifficultyConfig['tier'], minLen: number, maxLen: number): string {
-  const pool = words[tier].filter(
-    (w) => w.length >= minLen && w.length <= maxLen && !usedRecently.has(w),
-  )
-  const source = pool.length > 0 ? pool : words[tier].filter((w) => w.length >= minLen && w.length <= maxLen)
+function pickWord(): string {
+  const available = allWords.filter((w) => !usedRecently.has(w))
+  const source = available.length > 0 ? available : allWords
   const word = source[Math.floor(Math.random() * source.length)]!
 
   usedRecently.add(word)
@@ -35,17 +34,18 @@ export function spawnWord(
   canvasWidth: number,
   difficulty: DifficultyConfig,
 ): FallingWord {
-  const text = pickWord(difficulty.tier, difficulty.minWordLength, difficulty.maxWordLength)
+  const text = pickWord()
   const textWidth = text.length * 18
   const margin = 40
   const x = margin + Math.random() * Math.max(canvasWidth - textWidth - margin * 2, 0)
+  const speed = difficulty.minFallSpeed + Math.random() * (difficulty.maxFallSpeed - difficulty.minFallSpeed)
 
   return {
     id,
     text,
     x,
     y: -30,
-    speed: difficulty.fallSpeed,
+    speed,
     matchedChars: 0,
     targeted: false,
   }

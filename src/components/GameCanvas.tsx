@@ -1,4 +1,4 @@
-﻿import { useRef, useCallback, useState, useEffect } from 'react'
+﻿import { useRef, useCallback, useState, useEffect, useLayoutEffect } from 'react'
 import { useGameLoop } from '../hooks/useGameLoop.ts'
 import { createInitialState, type GameState } from '../game/gameState.ts'
 import { getDifficulty, getLevel, type DifficultyTier } from '../game/difficulty.ts'
@@ -17,6 +17,7 @@ interface GameCanvasProps {
 
 export function GameCanvas({ startingDifficulty, onGameOver }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const stateRef = useRef<GameState>(createInitialState())
   const inputRef = useRef('')
   const [hudState, setHudState] = useState({ score: 0, combo: 0, lives: 3, level: 0 })
@@ -27,12 +28,22 @@ export function GameCanvas({ startingDifficulty, onGameOver }: GameCanvasProps) 
     stateRef.current = createInitialState()
   }, [])
 
-  useEffect(() => {
-    const handleResize = () => {
-      setCanvasSize({ width: window.innerWidth, height: window.innerHeight })
+  useLayoutEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+
+    const updateSize = () => {
+      const width = container.clientWidth
+      const height = container.clientHeight
+      if (width > 0 && height > 0) {
+        setCanvasSize({ width, height })
+      }
     }
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
+
+    updateSize()
+    const observer = new ResizeObserver(updateSize)
+    observer.observe(container)
+    return () => observer.disconnect()
   }, [])
 
   const gameLoop = useCallback(
@@ -128,7 +139,7 @@ export function GameCanvas({ startingDifficulty, onGameOver }: GameCanvasProps) 
   }, [])
 
   return (
-    <div className="game-container">
+    <div className="game-container" ref={containerRef}>
       <canvas
         ref={canvasRef}
         width={canvasSize.width}
