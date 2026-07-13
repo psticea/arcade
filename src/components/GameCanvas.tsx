@@ -15,6 +15,7 @@ import { calculateScore, getMissedPenalty } from '../game/scoring.ts'
 import { calculateKeyboardInset, isKeyboardViewport } from '../game/mobileViewport.ts'
 import { HUD } from './HUD.tsx'
 import { InputBar } from './InputBar.tsx'
+import { getUiCopy } from '../uiCopy.ts'
 import '../styles/theme.css'
 
 interface GameCanvasProps {
@@ -29,6 +30,7 @@ export function GameCanvas({ startingDifficulty, language, onGameOver }: GameCan
   const stateRef = useRef<GameState>(createInitialState())
   const inputRef = useRef('')
   const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const text = getUiCopy(language)
   const initialDifficulty = getDifficulty(0, startingDifficulty)
   const initialProgress = getLevelProgress(0, startingDifficulty)
   const [targetText, setTargetText] = useState('')
@@ -158,8 +160,7 @@ export function GameCanvas({ startingDifficulty, language, onGameOver }: GameCan
         state.combo = 0
         const scorePenalty = missed.reduce((sum) => sum + getMissedPenalty(state.level), 0)
         state.score = Math.max(0, state.score - scorePenalty)
-        const lifeLabel = missed.length === 1 ? 'LIFE' : 'LIVES'
-        showFeedback(`${missed.length} MISSED / -${missed.length} ${lifeLabel} / -${scorePenalty} PTS`, 'miss')
+        showFeedback(text.game.missed(missed.length, scorePenalty), 'miss')
 
         if (state.lives <= 0) {
           state.status = 'gameover'
@@ -203,7 +204,7 @@ export function GameCanvas({ startingDifficulty, language, onGameOver }: GameCan
         secondsToNextLevel: levelProgress.secondsRemaining,
       })
     },
-    [language, onGameOver, showFeedback, startingDifficulty],
+    [language, onGameOver, showFeedback, startingDifficulty, text.game],
   )
 
   useGameLoop(gameLoop, stateRef.current.status === 'playing')
@@ -226,12 +227,12 @@ export function GameCanvas({ startingDifficulty, language, onGameOver }: GameCan
       state.score += points
       inputRef.current = ''
       setTargetText('')
-      showFeedback(`+${points} PTS`, 'success')
+      showFeedback(text.game.points(points), 'success')
       return ''
     }
     setTargetText(match?.text ?? '')
     return value
-  }, [showFeedback])
+  }, [showFeedback, text.game])
 
   return (
     <div
@@ -258,13 +259,14 @@ export function GameCanvas({ startingDifficulty, language, onGameOver }: GameCan
         tier={hudState.tier}
         levelProgress={hudState.levelProgress}
         secondsToNextLevel={hudState.secondsToNextLevel}
+        language={language}
       />
       <div
         className={`target-indicator ${targetText ? 'target-active' : ''}`}
         style={{ transform: `translate3d(-50%, ${-gameViewport.keyboardInset}px, 0)` }}
         aria-live="polite"
       >
-        {targetText ? <>TARGET <strong>{targetText}</strong></> : 'TYPE TO TARGET THE LOWEST MATCHING WORD'}
+        {targetText ? text.game.target(targetText) : text.game.targetPrompt}
       </div>
       {feedback && (
         <div key={feedback.id} className={`game-feedback feedback-${feedback.tone}`} aria-live="assertive">
@@ -274,6 +276,7 @@ export function GameCanvas({ startingDifficulty, language, onGameOver }: GameCan
       <InputBar
         onInput={handleInput}
         keyboardInset={gameViewport.keyboardInset}
+        language={language}
       />
     </div>
   )

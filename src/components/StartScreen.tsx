@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { DifficultyTier } from '../game/difficulty.ts'
 import type { GameLanguage } from '../game/wordManager.ts'
+import { getUiCopy } from '../uiCopy.ts'
 
 interface StartScreenProps {
   onStart: (difficulty: DifficultyTier, language: GameLanguage) => void
@@ -15,6 +16,11 @@ export function StartScreen({
 }: StartScreenProps) {
   const [difficulty, setDifficulty] = useState<DifficultyTier>(initialDifficulty)
   const [language, setLanguage] = useState<GameLanguage>(initialLanguage)
+  const text = getUiCopy(language)
+
+  useEffect(() => {
+    document.documentElement.lang = language === 'romanian' ? 'ro' : 'en'
+  }, [language])
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -32,14 +38,11 @@ export function StartScreen({
     <div className="screen start-screen">
       <div className="screen-content">
         <h1 className="game-title">WORD<span className="title-accent">FALL</span></h1>
-        <p className="game-subtitle">Type the falling words before they reach the bottom</p>
+        <p className="game-subtitle">{text.start.subtitle}</p>
         <fieldset className="language-picker">
-          <legend>Word language</legend>
+          <legend>{text.start.languageLegend}</legend>
           <div className="language-options">
-            {([
-              ['english', 'English'],
-              ['romanian', 'Romana'],
-            ] as const).map(([value, label]) => (
+            {(['english', 'romanian'] as const).map((value) => (
               <button
                 key={value}
                 type="button"
@@ -47,13 +50,13 @@ export function StartScreen({
                 aria-pressed={language === value}
                 onClick={() => setLanguage(value)}
               >
-                {label}
+                {text.language[value]}
               </button>
             ))}
           </div>
         </fieldset>
         <fieldset className="difficulty-picker">
-          <legend>Choose starting difficulty</legend>
+          <legend>{text.start.difficultyLegend}</legend>
           <div className="difficulty-options">
             {(['easy', 'medium', 'hard', 'expert'] as const).map((tier) => (
               <button
@@ -63,20 +66,19 @@ export function StartScreen({
                 aria-pressed={difficulty === tier}
                 onClick={() => setDifficulty(tier)}
               >
-                {tier}
+                {text.difficulty[tier]}
               </button>
             ))}
           </div>
-          <p className="difficulty-hint">The pace increases every 10 seconds, up to Level 13</p>
+          <p className="difficulty-hint">{text.start.difficultyHint}</p>
         </fieldset>
         <div className="instructions">
-          <div className="instruction-item">Words fall from the top - type them to destroy</div>
-          <div className="instruction-item">The pace picks up every 10 seconds</div>
-          <div className="instruction-item">Build combos for bonus points</div>
-          <div className="instruction-item">3 lives - miss a word and lose one</div>
+          {text.start.instructions.map((instruction) => (
+            <div className="instruction-item" key={instruction}>{instruction}</div>
+          ))}
         </div>
         <button className="start-button" onClick={() => onStart(difficulty, language)}>
-          PRESS ENTER TO START
+          {text.start.startButton}
         </button>
       </div>
     </div>
