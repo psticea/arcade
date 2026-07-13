@@ -1,7 +1,7 @@
 ﻿import { useRef, useCallback, useState, useEffect, useLayoutEffect, type CSSProperties } from 'react'
 import { useGameLoop } from '../hooks/useGameLoop.ts'
 import { createInitialState, type GameState } from '../game/gameState.ts'
-import { getDifficulty, getLevel, type DifficultyTier } from '../game/difficulty.ts'
+import { getDifficulty, getLevel, getLevelProgress, type DifficultyTier } from '../game/difficulty.ts'
 import {
   spawnWord,
   updateWords,
@@ -28,11 +28,19 @@ export function GameCanvas({ startingDifficulty, language, onGameOver }: GameCan
   const containerRef = useRef<HTMLDivElement>(null)
   const stateRef = useRef<GameState>(createInitialState())
   const inputRef = useRef('')
+  const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const initialDifficulty = getDifficulty(0, startingDifficulty)
+  const initialProgress = getLevelProgress(0, startingDifficulty)
+  const [targetText, setTargetText] = useState('')
+  const [feedback, setFeedback] = useState<{ id: number; message: string; tone: 'success' | 'miss' }>()
   const [hudState, setHudState] = useState({
     score: 0,
     combo: 0,
     lives: 3,
     level: getLevel(0, startingDifficulty),
+    tier: initialDifficulty.tier,
+    levelProgress: initialProgress.progress,
+    secondsToNextLevel: initialProgress.secondsRemaining,
   })
   const [canvasSize, setCanvasSize] = useState({ width: window.innerWidth, height: window.innerHeight })
   const [gameViewport, setGameViewport] = useState({
@@ -45,6 +53,16 @@ export function GameCanvas({ startingDifficulty, language, onGameOver }: GameCan
     resetRecentWords(language)
     stateRef.current = createInitialState()
   }, [language])
+
+  useEffect(() => () => {
+    if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current)
+  }, [])
+
+  const showFeedback = useCallback((message: string, tone: 'success' | 'miss') => {
+    if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current)
+    setFeedback({ id: Date.now(), message, tone })
+    feedbackTimerRef.current = setTimeout(() => setFeedback(undefined), 900)
+  }, [])
 
   useLayoutEffect(() => {
     const visualViewport = window.visualViewport
@@ -118,11 +136,13 @@ export function GameCanvas({ startingDifficulty, language, onGameOver }: GameCan
       state.elapsedTime = elapsed
       state.level = getLevel(elapsed, startingDifficulty)
       const difficulty = getDifficulty(elapsed, startingDifficulty)
+      const levelProgress = getLevelProgress(elapsed, startingDifficulty)
 
       // Spawn words
       const timeSinceSpawn = (elapsed - state.lastSpawnTime) * 1000
       if (timeSinceSpawn >= difficulty.spawnIntervalMs && state.words.length < difficulty.maxWordsOnScreen) {
-        state.words.push(spawnWord(state.nextWordId++, canvas.width, difficulty, language))
+        const spawnedWord = spawnWord(state.nextWordId++, canvas.width, difficulty, language)
+        state.words.push(spawnedWord)
         state.lastSpawnTime = elapsed
       }
 
@@ -136,7 +156,10 @@ export function GameCanvas({ startingDifficulty, language, onGameOver }: GameCan
         state.lives -= missed.length
         state.wordsMissed += missed.length
         state.combo = 0
-        state.score = Math.max(0, state.score - missed.reduce((s, _w) => s + getMissedPenalty(state.level), 0))
+        const scorePenalty = missed.reduce((sum) => sum + getMissedPenalty(state.level), 0)
+        state.score = Math.max(0, state.score - scorePenalty)
+        const lifeLabel = missed.length === 1 ? 'LIFE' : 'LIVES'
+        showFeedback(`${missed.length} MISSED / -${missed.length} ${lifeLabel} / -${scorePenalty} PTS`, 'miss')
 
         if (state.lives <= 0) {
           state.status = 'gameover'
@@ -170,9 +193,17 @@ export function GameCanvas({ startingDifficulty, language, onGameOver }: GameCan
       renderParticles(ctx, state.particles)
 
       // Update HUD (throttled by React batching)
-      setHudState({ score: state.score, combo: state.combo, lives: state.lives, level: state.level })
+      setHudState({
+        score: state.score,
+        combo: state.combo,
+        lives: state.lives,
+        level: state.level,
+        tier: difficulty.tier,
+        levelProgress: levelProgress.progress,
+        secondsToNextLevel: levelProgress.secondsRemaining,
+      })
     },
-    [language, onGameOver, startingDifficulty],
+    [language, onGameOver, showFeedback, startingDifficulty],
   )
 
   useGameLoop(gameLoop, stateRef.current.status === 'playing')
@@ -190,12 +221,17 @@ export function GameCanvas({ startingDifficulty, language, onGameOver }: GameCan
       state.combo += 1
       state.maxCombo = Math.max(state.maxCombo, state.combo)
       state.wordsTyped += 1
-      state.score += calculateScore(match.text.length, state.combo, state.level)
+      state.charactersTyped += match.text.length
+      const points = calculateScore(match.text.length, state.combo, state.level)
+      state.score += points
       inputRef.current = ''
+      setTargetText('')
+      showFeedback(`+${points} PTS`, 'success')
       return ''
     }
+    setTargetText(match?.text ?? '')
     return value
-  }, [])
+  }, [showFeedback])
 
   return (
     <div
@@ -214,8 +250,31 @@ export function GameCanvas({ startingDifficulty, language, onGameOver }: GameCan
         height={canvasSize.height}
         className="game-canvas"
       />
-      <HUD score={hudState.score} combo={hudState.combo} lives={hudState.lives} level={hudState.level} />
-      <InputBar onInput={handleInput} keyboardInset={gameViewport.keyboardInset} />
+      <HUD
+        score={hudState.score}
+        combo={hudState.combo}
+        lives={hudState.lives}
+        level={hudState.level}
+        tier={hudState.tier}
+        levelProgress={hudState.levelProgress}
+        secondsToNextLevel={hudState.secondsToNextLevel}
+      />
+      <div
+        className={`target-indicator ${targetText ? 'target-active' : ''}`}
+        style={{ transform: `translate3d(-50%, ${-gameViewport.keyboardInset}px, 0)` }}
+        aria-live="polite"
+      >
+        {targetText ? <>TARGET <strong>{targetText}</strong></> : 'TYPE TO TARGET THE LOWEST MATCHING WORD'}
+      </div>
+      {feedback && (
+        <div key={feedback.id} className={`game-feedback feedback-${feedback.tone}`} aria-live="assertive">
+          {feedback.message}
+        </div>
+      )}
+      <InputBar
+        onInput={handleInput}
+        keyboardInset={gameViewport.keyboardInset}
+      />
     </div>
   )
 }

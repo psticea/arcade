@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getDifficulty, getLevel } from '../game/difficulty.ts'
+import { getDifficulty, getLevel, getLevelProgress, MAX_LEVEL } from '../game/difficulty.ts'
 
 describe('getLevel', () => {
   it('returns 0 for the first 10 seconds', () => {
@@ -18,6 +18,20 @@ describe('getLevel', () => {
     expect(getLevel(0, 'hard')).toBe(2)
     expect(getLevel(10, 'hard')).toBe(3)
   })
+
+  it('caps progression at the maximum level', () => {
+    expect(getLevel(1000, 'expert')).toBe(MAX_LEVEL)
+  })
+})
+
+describe('getLevelProgress', () => {
+  it('reports progress and seconds until the next level', () => {
+    expect(getLevelProgress(4, 'easy')).toEqual({ progress: 0.4, secondsRemaining: 6 })
+  })
+
+  it('reports max progression at the level cap', () => {
+    expect(getLevelProgress(1000, 'expert')).toEqual({ progress: 1, secondsRemaining: 0 })
+  })
 })
 
 describe('getDifficulty', () => {
@@ -25,6 +39,7 @@ describe('getDifficulty', () => {
     const hardStart = getDifficulty(0, 'hard')
     const easyAfterTwoLevels = getDifficulty(20, 'easy')
     expect(hardStart).toEqual(easyAfterTwoLevels)
+    expect(hardStart.tier).toBe('hard')
   })
 
   it('decreases spawn interval with level', () => {

@@ -28,16 +28,6 @@ export function InputBar({ onInput, keyboardInset = 0 }: InputBarProps) {
     [onInput],
   )
 
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setValue('')
-        onInput('')
-      }
-    },
-    [onInput],
-  )
-
   return (
     <div
       className="input-bar"
@@ -48,8 +38,8 @@ export function InputBar({ onInput, keyboardInset = 0 }: InputBarProps) {
         type="text"
         value={value}
         onChange={handleChange}
-        onKeyDown={handleKeyDown}
         className="input-field"
+        aria-label="Word input"
         placeholder="Type the falling words..."
         autoComplete="off"
         autoCorrect="off"

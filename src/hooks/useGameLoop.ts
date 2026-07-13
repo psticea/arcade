@@ -5,29 +5,28 @@ export function useGameLoop(
   running: boolean,
 ): void {
   const callbackRef = useRef(callback)
-  const startTimeRef = useRef(0)
   const lastTimeRef = useRef(0)
+  const elapsedTimeRef = useRef(0)
   const rafRef = useRef(0)
 
   callbackRef.current = callback
 
   const loop = useCallback((timestamp: number) => {
-    if (startTimeRef.current === 0) {
-      startTimeRef.current = timestamp
+    if (lastTimeRef.current === 0) {
       lastTimeRef.current = timestamp
     }
 
-    const dt = Math.min((timestamp - lastTimeRef.current) / 1000, 0.05)
-    const elapsed = (timestamp - startTimeRef.current) / 1000
+    const rawDelta = (timestamp - lastTimeRef.current) / 1000
+    const dt = Math.min(rawDelta, 0.05)
+    elapsedTimeRef.current += rawDelta
     lastTimeRef.current = timestamp
 
-    callbackRef.current(dt, elapsed)
+    callbackRef.current(dt, elapsedTimeRef.current)
     rafRef.current = requestAnimationFrame(loop)
   }, [])
 
   useEffect(() => {
     if (running) {
-      startTimeRef.current = 0
       lastTimeRef.current = 0
       rafRef.current = requestAnimationFrame(loop)
       return () => cancelAnimationFrame(rafRef.current)

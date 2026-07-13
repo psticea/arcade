@@ -16,17 +16,34 @@ export interface FallingWord {
 }
 
 const MAX_RECENT = 40
-const wordPools: Record<GameLanguage, string[]> = {
-  english: [...new Set([...words.easy, ...words.medium, ...words.hard, ...words.expert])],
-  romanian: romanianWords,
+const romanianTierRanges: Record<DifficultyConfig['tier'], [number, number]> = {
+  easy: [1, 5],
+  medium: [6, 7],
+  hard: [8, 8],
+  expert: [9, Number.POSITIVE_INFINITY],
+}
+const englishWordPools = words as Record<DifficultyConfig['tier'], string[]>
+const wordPools: Record<GameLanguage, Record<DifficultyConfig['tier'], string[]>> = {
+  english: {
+    easy: [...new Set(englishWordPools.easy)],
+    medium: [...new Set(englishWordPools.medium)],
+    hard: [...new Set(englishWordPools.hard)],
+    expert: [...new Set(englishWordPools.expert)],
+  },
+  romanian: Object.fromEntries(
+    Object.entries(romanianTierRanges).map(([tier, [minimumLength, maximumLength]]) => [
+      tier,
+      romanianWords.filter((word) => word.length >= minimumLength && word.length <= maximumLength),
+    ]),
+  ) as Record<DifficultyConfig['tier'], string[]>,
 }
 const usedRecently: Record<GameLanguage, Set<string>> = {
   english: new Set<string>(),
   romanian: new Set<string>(),
 }
 
-function pickWord(language: GameLanguage): string {
-  const pool = wordPools[language]
+function pickWord(language: GameLanguage, tier: DifficultyConfig['tier']): string {
+  const pool = wordPools[language][tier]
   const recentWords = usedRecently[language]
   const available = pool.filter((word) => !recentWords.has(word))
   const source = available.length > 0 ? available : pool
@@ -47,7 +64,7 @@ export function spawnWord(
   difficulty: DifficultyConfig,
   language: GameLanguage = 'english',
 ): FallingWord {
-  const text = pickWord(language)
+  const text = pickWord(language, difficulty.tier)
   const textWidth = text.length * 18
   const margin = 40
   const x = margin + Math.random() * Math.max(canvasWidth - textWidth - margin * 2, 0)

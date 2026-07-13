@@ -8,6 +8,7 @@ const baseConfig: DifficultyConfig = {
   minFallSpeed: 25,
   maxFallSpeed: 30,
   maxWordsOnScreen: 4,
+  tier: 'easy',
 }
 
 describe('spawnWord', () => {
@@ -34,6 +35,27 @@ describe('spawnWord', () => {
   it('spawns Romanian words from the Romanian pool', () => {
     const word = spawnWord(1, 800, baseConfig, 'romanian')
     expect(romanianWords).toContain(word.text)
+  })
+
+  it('uses short words for Easy in both languages', () => {
+    for (const language of ['english', 'romanian'] as const) {
+      resetRecentWords(language)
+      const spawnedWords = Array.from({ length: 30 }, (_, index) => (
+        spawnWord(index, 800, baseConfig, language).text
+      ))
+      expect(spawnedWords.every((word) => word.length <= 5)).toBe(true)
+    }
+  })
+
+  it('uses long words for Expert in both languages', () => {
+    const expertConfig: DifficultyConfig = { ...baseConfig, tier: 'expert' }
+    for (const language of ['english', 'romanian'] as const) {
+      resetRecentWords(language)
+      const spawnedWords = Array.from({ length: 30 }, (_, index) => (
+        spawnWord(index, 800, expertConfig, language).text
+      ))
+      expect(spawnedWords.every((word) => word.length >= 9)).toBe(true)
+    }
   })
 
   it('keeps every Romanian word lowercase and ASCII-only', () => {

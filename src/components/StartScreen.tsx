@@ -4,11 +4,17 @@ import type { GameLanguage } from '../game/wordManager.ts'
 
 interface StartScreenProps {
   onStart: (difficulty: DifficultyTier, language: GameLanguage) => void
+  initialDifficulty?: DifficultyTier
+  initialLanguage?: GameLanguage
 }
 
-export function StartScreen({ onStart }: StartScreenProps) {
-  const [difficulty, setDifficulty] = useState<DifficultyTier>('easy')
-  const [language, setLanguage] = useState<GameLanguage>('english')
+export function StartScreen({
+  onStart,
+  initialDifficulty = 'easy',
+  initialLanguage = 'english',
+}: StartScreenProps) {
+  const [difficulty, setDifficulty] = useState<DifficultyTier>(initialDifficulty)
+  const [language, setLanguage] = useState<GameLanguage>(initialLanguage)
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -61,7 +67,7 @@ export function StartScreen({ onStart }: StartScreenProps) {
               </button>
             ))}
           </div>
-          <p className="difficulty-hint">The pace increases every 10 seconds</p>
+          <p className="difficulty-hint">The pace increases every 10 seconds, up to Level 13</p>
         </fieldset>
         <div className="instructions">
           <div className="instruction-item">Words fall from the top - type them to destroy</div>

@@ -12,6 +12,7 @@ export interface GameState {
   lastSpawnTime: number
   nextWordId: number
   wordsTyped: number
+  charactersTyped: number
   wordsMissed: number
   maxCombo: number
   status: 'playing' | 'gameover'
@@ -26,9 +27,10 @@ export function createInitialState(): GameState {
     lives: 3,
     level: 0,
     elapsedTime: 0,
-    lastSpawnTime: 0,
+    lastSpawnTime: Number.NEGATIVE_INFINITY,
     nextWordId: 1,
     wordsTyped: 0,
+    charactersTyped: 0,
     wordsMissed: 0,
     maxCombo: 0,
     status: 'playing',
