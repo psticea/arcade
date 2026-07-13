@@ -1,16 +1,26 @@
+export type DifficultyTier = 'easy' | 'medium' | 'hard' | 'expert'
+
 export interface DifficultyConfig {
   minWordLength: number
   maxWordLength: number
   spawnIntervalMs: number
   fallSpeed: number
   maxWordsOnScreen: number
-  tier: 'easy' | 'medium' | 'hard' | 'expert'
+  tier: DifficultyTier
 }
 
-export function getDifficulty(elapsedSeconds: number): DifficultyConfig {
-  const level = Math.floor(elapsedSeconds / 30)
+const tiers: DifficultyTier[] = ['easy', 'medium', 'hard', 'expert']
 
-  const tiers: Array<DifficultyConfig['tier']> = ['easy', 'medium', 'hard', 'expert']
+export function getLevel(elapsedSeconds: number, startingTier: DifficultyTier = 'easy'): number {
+  return tiers.indexOf(startingTier) + Math.floor(elapsedSeconds / 30)
+}
+
+export function getDifficulty(
+  elapsedSeconds: number,
+  startingTier: DifficultyTier = 'easy',
+): DifficultyConfig {
+  const level = getLevel(elapsedSeconds, startingTier)
+
   const tierIndex = Math.min(level, tiers.length - 1)
   const tier = tiers[tierIndex] ?? 'easy'
 
@@ -31,8 +41,4 @@ export function getDifficulty(elapsedSeconds: number): DifficultyConfig {
     maxWordsOnScreen: 4 + Math.min(level * 2, 10),
     tier,
   }
-}
-
-export function getLevel(elapsedSeconds: number): number {
-  return Math.floor(elapsedSeconds / 30)
 }

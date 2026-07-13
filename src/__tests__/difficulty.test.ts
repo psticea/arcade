@@ -13,6 +13,11 @@ describe('getLevel', () => {
     expect(getLevel(60)).toBe(2)
     expect(getLevel(90)).toBe(3)
   })
+
+  it('starts at the selected difficulty level', () => {
+    expect(getLevel(0, 'hard')).toBe(2)
+    expect(getLevel(30, 'hard')).toBe(3)
+  })
 })
 
 describe('getDifficulty', () => {
@@ -42,6 +47,11 @@ describe('getDifficulty', () => {
   it('caps at expert tier for very long games', () => {
     const config = getDifficulty(300)
     expect(config.tier).toBe('expert')
+  })
+
+  it('starts at the selected tier and continues progressing', () => {
+    expect(getDifficulty(0, 'hard').tier).toBe('hard')
+    expect(getDifficulty(30, 'hard').tier).toBe('expert')
   })
 
   it('decreases spawn interval with level', () => {

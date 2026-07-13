@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Wordfall UI Directions</title>
+    <style>
+      * { box-sizing: border-box; }
+
+      :root {
+        color: #17191c;
+        background: #e9ebee;
+        font-family: "Segoe UI", sans-serif;
+      }
+
+      body { margin: 0; }
+
+      button { font: inherit; }
+
+      .gallery-header {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 24px;
+        padding: 40px max(24px, calc((100vw - 1440px) / 2));
+        border-bottom: 1px solid #c8ccd1;
+        background: #f7f7f8;
+      }
+
+      .gallery-header h1 {
+        max-width: 720px;
+        margin: 0 0 10px;
+        font: 800 44px/1.02 Georgia, serif;
+        text-wrap: balance;
+      }
+
+      .gallery-header p {
+        max-width: 65ch;
+        margin: 0;
+        color: #555b63;
+        line-height: 1.6;
+      }
+
+      .selection-status {
+        flex: 0 0 auto;
+        min-width: 230px;
+        padding: 14px 18px;
+        border: 1px solid #aaafb6;
+        background: #fff;
+        font-weight: 700;
+      }
+
+      .gallery {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 28px;
+        width: min(1440px, 100%);
+        margin: 0 auto;
+        padding: 32px 24px 72px;
+      }
+
+      .concept {
+        overflow: hidden;
+        border: 1px solid #bfc4ca;
+        border-radius: 8px;
+        background: #fff;
+        box-shadow: 0 12px 32px rgba(20, 25, 35, 0.08);
+      }
+
+      .concept.selected {
+        outline: 4px solid #17191c;
+        outline-offset: 4px;
+      }
+
+      .concept-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        min-height: 74px;
+        padding: 14px 16px;
+        border-top: 1px solid #d7dade;
+      }
+
+      .concept-name {
+        margin: 0 0 3px;
+        font-size: 17px;
+      }
+
+      .concept-note {
+        margin: 0;
+        color: #646a72;
+        font-size: 13px;
+      }
+
+      .choose {
+        flex: 0 0 auto;
+        padding: 9px 13px;
+        border: 1px solid #17191c;
+        border-radius: 4px;
+        background: #fff;
+        color: #17191c;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .choose:hover,
+      .choose:focus-visible {
+        background: #17191c;
+        color: #fff;
+      }
+
+      .preview {
+        position: relative;
+        display: grid;
+        grid-template-columns: minmax(0, 1.2fr) minmax(210px, 0.8fr);
+        min-height: 390px;
+        overflow: hidden;
+      }
+
+      .brand,
+      .controls {
+        position: relative;
+        z-index: 2;
+        padding: 34px;
+      }
+
+      .brand {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .controls {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .number { font-size: 12px; font-weight: 800; }
+
+      .logo {
+        margin: 18px 0 10px;
+        font-size: 52px;
+        font-weight: 900;
+        line-height: 0.88;
+        letter-spacing: 0;
+      }
+
+      .tagline { max-width: 26ch; margin: 0; line-height: 1.45; }
+
+      .falling-field {
+        position: relative;
+        height: 150px;
+        margin-top: 24px;
+        overflow: hidden;
+      }
+
+      .word {
+        position: absolute;
+        padding: 5px 8px;
+        border: 1px solid currentColor;
+        font: 700 12px Consolas, monospace;
+      }
+
+      .word:nth-child(1) { top: 7px; left: 8%; }
+      .word:nth-child(2) { top: 58px; left: 54%; }
+      .word:nth-child(3) { top: 112px; left: 25%; }
+
+      .control-label { margin: 0 0 12px; font-size: 13px; font-weight: 800; }
+
+      .difficulty {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        margin-bottom: 22px;
+      }
+
+      .difficulty span {
+        padding: 9px 6px;
+        border: 1px solid currentColor;
+        text-align: center;
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+
+      .difficulty .active { color: var(--active-color, currentColor); }
+
+      .play {
+        width: 100%;
+        padding: 13px 16px;
+        border: 0;
+        background: var(--button-bg, #111);
+        color: var(--button-text, #fff);
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+
+      /* 01: precise dark control room */
+      .signal { color: #edf7f5; background: #09110f; font-family: Consolas, monospace; }
+      .signal::before { content: ""; position: absolute; inset: 0; background-image: linear-gradient(rgba(77, 255, 203, .08) 1px, transparent 1px), linear-gradient(90deg, rgba(77, 255, 203, .08) 1px, transparent 1px); background-size: 28px 28px; }
+      .signal .controls { border-left: 1px solid #28433b; background: rgba(7, 20, 16, .9); }
+      .signal .logo { color: #4dffcb; font-family: Impact, sans-serif; }
+      .signal .tagline { color: #a7bbb5; }
+      .signal .difficulty span { color: #759188; border-color: #37554b; }
+      .signal .difficulty .active { color: #09110f; background: #4dffcb; }
+      .signal { --button-bg: #4dffcb; --button-text: #07100d; }
+
+      /* 02: warm arcade cabinet */
+      .cabinet { color: #fff7d6; background: #b51e2d; font-family: "Trebuchet MS", sans-serif; }
+      .cabinet::before { content: ""; position: absolute; width: 260px; height: 260px; left: -80px; bottom: -100px; border: 42px solid #ffc928; border-radius: 50%; }
+      .cabinet .controls { margin: 22px; border: 4px solid #2b1720; background: #ffc928; color: #2b1720; box-shadow: 8px 8px 0 #2b1720; }
+      .cabinet .logo { color: #ffc928; font-family: Impact, sans-serif; text-shadow: 5px 5px 0 #2b1720; transform: skew(-4deg); }
+      .cabinet .difficulty .active { background: #b51e2d; color: #fff7d6; }
+      .cabinet { --button-bg: #2b1720; --button-text: #ffc928; }
+
+      /* 03: editorial scoreboard */
+      .press { color: #161616; background: #f4f4f1; font-family: Georgia, serif; }
+      .press .brand { border-right: 1px solid #161616; }
+      .press .number { border-bottom: 3px double #161616; padding-bottom: 8px; }
+      .press .logo { max-width: 8ch; font-size: 56px; font-weight: 700; }
+      .press .tagline { font-style: italic; }
+      .press .word { border-width: 0 0 1px; }
+      .press .controls { background: #e3ff32; }
+      .press .difficulty span { background: #f4f4f1; }
+      .press .difficulty .active { color: #fff; background: #d3222a; }
+      .press { --button-bg: #161616; }
+
+      /* 04: blueprint technical drawing */
+      .blueprint { color: #fff; background: #0753a6; font-family: "Courier New", monospace; }
+      .blueprint::before { content: ""; position: absolute; inset: 0; opacity: .25; background-image: linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px); background-size: 22px 22px; }
+      .blueprint .brand { border: 1px solid rgba(255,255,255,.75); margin: 18px 0 18px 18px; }
+      .blueprint .controls { margin: 18px 18px 18px 0; border: 1px solid rgba(255,255,255,.75); background: #0753a6; }
+      .blueprint .logo { font-size: 46px; font-weight: 400; }
+      .blueprint .difficulty .active { color: #0753a6; background: #fff; }
+      .blueprint { --button-bg: #fff; --button-text: #0753a6; }
+
+      /* 05: broadcast energy */
+      .broadcast { color: #121316; background: #f5f6f2; font-family: Arial, sans-serif; }
+      .broadcast::before { content: ""; position: absolute; width: 65%; height: 100%; right: -20%; background: #c8ff23; transform: skewX(-14deg); }
+      .broadcast .number { display: inline-block; width: fit-content; padding: 6px 10px; background: #121316; color: #fff; }
+      .broadcast .logo { font-family: Impact, sans-serif; font-style: italic; }
+      .broadcast .controls { color: #121316; }
+      .broadcast .difficulty span { background: #f5f6f2; }
+      .broadcast .difficulty .active { background: #121316; color: #c8ff23; }
+      .broadcast { --button-bg: #ed3f28; }
+
+      /* 06: primary-color brutalism */
+      .blocks { color: #111; background: #2368e8; font-family: Arial, sans-serif; }
+      .blocks .brand { margin: 18px 0 18px 18px; border: 4px solid #111; background: #f7df25; box-shadow: 9px 9px 0 #111; }
+      .blocks .controls { margin: 18px; border: 4px solid #111; background: #f24d32; box-shadow: 9px 9px 0 #111; }
+      .blocks .logo { font-family: Impact, sans-serif; font-size: 58px; }
+      .blocks .word { background: #fff; box-shadow: 3px 3px 0 #111; }
+      .blocks .difficulty span { background: #fff; border-width: 3px; }
+      .blocks .difficulty .active { background: #2368e8; color: #fff; }
+      .blocks .play { border: 3px solid #111; box-shadow: 4px 4px 0 #111; }
+      .blocks { --button-bg: #f7df25; --button-text: #111; }
+
+      /* 07: focused light utility */
+      .utility { color: #22252b; background: #fff; font-family: "Segoe UI", sans-serif; }
+      .utility .brand { background: #e8edf2; }
+      .utility .logo { color: #1e5b48; font-size: 48px; letter-spacing: -1px; }
+      .utility .tagline { color: #58616d; }
+      .utility .word { border: 0; border-radius: 4px; background: #fff; box-shadow: 0 5px 18px rgba(25,35,45,.14); }
+      .utility .controls { box-shadow: -12px 0 30px rgba(25,35,45,.08); }
+      .utility .difficulty span { color: #5d6670; border-color: #c8ced5; border-radius: 4px; }
+      .utility .difficulty .active { color: #fff; background: #1e5b48; border-color: #1e5b48; }
+      .utility .play { border-radius: 4px; }
+      .utility { --button-bg: #e14a2b; }
+
+      /* 08: phosphor terminal */
+      .terminal { color: #ffb000; background: #100f0b; font-family: Consolas, monospace; }
+      .terminal::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(0deg, transparent 0 3px, rgba(255,176,0,.04) 3px 4px); }
+      .terminal .logo { font-size: 44px; font-weight: 400; }
+      .terminal .logo::before { content: "> "; }
+      .terminal .controls { border-left: 1px dashed #ffb000; }
+      .terminal .difficulty span { border-style: dashed; color: #9c731c; }
+      .terminal .difficulty .active { background: #ffb000; color: #100f0b; }
+      .terminal .play { border: 1px solid #ffb000; }
+      .terminal { --button-bg: transparent; --button-text: #ffb000; }
+
+      /* 09: midnight botanical */
+      .garden { color: #eef4e6; background: #17372d; font-family: Georgia, serif; }
+      .garden::before { content: ""; position: absolute; width: 430px; height: 430px; left: -210px; top: -220px; border: 90px solid #ec6b45; border-radius: 50%; }
+      .garden .logo { color: #f0df7b; font-weight: 400; }
+      .garden .word { border-color: #82b59c; border-radius: 50%; }
+      .garden .controls { margin: 24px; background: #eef4e6; color: #17372d; }
+      .garden .difficulty span { border-color: #94a99e; }
+      .garden .difficulty .active { color: #eef4e6; background: #17372d; }
+      .garden { --button-bg: #ec6b45; }
+
+      /* 10: chromatic arena */
+      .arena { color: #fff; background: #ff5a24; font-family: "Trebuchet MS", sans-serif; }
+      .arena::before { content: ""; position: absolute; width: 58%; height: 160%; right: -8%; top: -30%; border-radius: 50%; background: #183ed1; }
+      .arena .logo { font-family: Impact, sans-serif; font-size: 60px; }
+      .arena .controls { margin: 20px; border: 2px solid #fff; color: #fff; }
+      .arena .difficulty span { background: #183ed1; }
+      .arena .difficulty .active { background: #fff; color: #183ed1; }
+      .arena .play { outline: 2px solid #fff; outline-offset: 3px; }
+      .arena { --button-bg: #f8e83a; --button-text: #111; }
+
+      @media (max-width: 900px) {
+        .gallery { grid-template-columns: 1fr; }
+      }
+
+      @media (max-width: 600px) {
+        .gallery-header { align-items: stretch; flex-direction: column; padding: 28px 20px; }
+        .gallery-header h1 { font-size: 34px; }
+        .gallery { padding: 20px 12px 48px; }
+        .preview { grid-template-columns: 1fr; }
+        .brand { min-height: 330px; }
+        .controls { min-height: 250px; }
+        .signal .controls, .terminal .controls { border-left: 0; border-top: 1px solid currentColor; }
+        .press .brand { border-right: 0; border-bottom: 1px solid #161616; }
+        .blueprint .brand { margin: 12px 12px 0; }
+        .blueprint .controls { margin: 0 12px 12px; }
+      }
+
+      @media (prefers-reduced-motion: no-preference) {
+        .word { animation: drift 3.8s ease-in-out infinite alternate; }
+        .word:nth-child(2) { animation-delay: -.8s; }
+        .word:nth-child(3) { animation-delay: -1.6s; }
+        @keyframes drift { to { transform: translateY(12px); } }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="gallery-header">
+      <div>
+        <h1>Choose the next Wordfall interface</h1>
+        <p>Ten distinct start-screen directions using the same game controls. Select one concept and use its number when describing any changes you want.</p>
+      </div>
+      <div class="selection-status" aria-live="polite">No direction selected</div>
+    </header>
+
+    <main class="gallery" id="gallery"></main>
+
+    <template id="concept-template">
+      <article class="concept">
+        <div class="preview">
+          <section class="brand">
+            <div>
+              <div class="number"></div>
+              <div class="logo">WORD<br />FALL</div>
+              <p class="tagline">Type fast. Keep the words from reaching the line.</p>
+            </div>
+            <div class="falling-field" aria-hidden="true">
+              <span class="word">velocity</span>
+              <span class="word">focus</span>
+              <span class="word">rhythm</span>
+            </div>
+          </section>
+          <section class="controls">
+            <p class="control-label">Starting difficulty</p>
+            <div class="difficulty">
+              <span>Easy</span><span class="active">Medium</span><span>Hard</span><span>Expert</span>
+            </div>
+            <button class="play" type="button">Start game</button>
+          </section>
+        </div>
+        <footer class="concept-meta">
+          <div>
+            <h2 class="concept-name"></h2>
+            <p class="concept-note"></p>
+          </div>
+          <button class="choose" type="button">Select direction</button>
+        </footer>
+      </article>
+    </template>
+
+    <script>
+      const concepts = [
+        ['signal', 'Signal Grid', 'Tactical, precise, neon control room'],
+        ['cabinet', 'Arcade Cabinet', 'Loud, nostalgic, high-energy arcade'],
+        ['press', 'The Daily Fall', 'Editorial, clever, typography-led'],
+        ['blueprint', 'Blueprint', 'Technical, measured, diagrammatic'],
+        ['broadcast', 'Live Broadcast', 'Competitive, sporty, fast-moving'],
+        ['blocks', 'Primary Blocks', 'Brutalist, playful, unmistakable'],
+        ['utility', 'Focused Utility', 'Clean, calm, modern game tool'],
+        ['terminal', 'Phosphor Terminal', 'Minimal, retro-computing, focused'],
+        ['garden', 'Midnight Garden', 'Unexpected, elegant, atmospheric'],
+        ['arena', 'Chromatic Arena', 'Bold, youthful, tournament energy'],
+      ]
+
+      const gallery = document.querySelector('#gallery')
+      const template = document.querySelector('#concept-template')
+      const status = document.querySelector('.selection-status')
+
+      concepts.forEach(([className, name, note], index) => {
+        const fragment = template.content.cloneNode(true)
+        const article = fragment.querySelector('.concept')
+        const number = String(index + 1).padStart(2, '0')
+        article.dataset.name = name
+        article.querySelector('.preview').classList.add(className)
+        article.querySelector('.number').textContent = `Direction ${number}`
+        article.querySelector('.concept-name').textContent = `${number}. ${name}`
+        article.querySelector('.concept-note').textContent = note
+        article.querySelector('.choose').addEventListener('click', () => {
+          document.querySelectorAll('.concept').forEach((item) => item.classList.remove('selected'))
+          article.classList.add('selected')
+          status.textContent = `Selected: ${number}. ${name}`
+          article.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+        })
+        gallery.appendChild(fragment)
+      })
+    </script>
+  </body>
+</html>
