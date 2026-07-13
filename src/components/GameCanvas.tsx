@@ -1,4 +1,4 @@
-﻿import { useRef, useCallback, useState, useEffect, useLayoutEffect } from 'react'
+﻿import { useRef, useCallback, useState, useEffect, useLayoutEffect, type CSSProperties } from 'react'
 import { useGameLoop } from '../hooks/useGameLoop.ts'
 import { createInitialState, type GameState } from '../game/gameState.ts'
 import { getDifficulty, getLevel, type DifficultyTier } from '../game/difficulty.ts'
@@ -12,6 +12,7 @@ import {
 import { spawnExplosion, updateParticles } from '../game/particleSystem.ts'
 import { renderBackground, renderWords, renderParticles, renderDangerZone } from '../game/renderer.ts'
 import { calculateScore, getMissedPenalty } from '../game/scoring.ts'
+import { calculateKeyboardInset, isKeyboardViewport } from '../game/mobileViewport.ts'
 import { HUD } from './HUD.tsx'
 import { InputBar } from './InputBar.tsx'
 import '../styles/theme.css'
@@ -34,11 +35,57 @@ export function GameCanvas({ startingDifficulty, language, onGameOver }: GameCan
     level: getLevel(0, startingDifficulty),
   })
   const [canvasSize, setCanvasSize] = useState({ width: window.innerWidth, height: window.innerHeight })
+  const [gameViewport, setGameViewport] = useState({
+    width: window.innerWidth,
+    height: window.innerHeight,
+    keyboardInset: 0,
+  })
 
   useEffect(() => {
     resetRecentWords(language)
     stateRef.current = createInitialState()
   }, [language])
+
+  useLayoutEffect(() => {
+    const visualViewport = window.visualViewport
+    let stableWidth = window.innerWidth
+    let stableHeight = window.innerHeight
+
+    const updateGameViewport = () => {
+      const visualHeight = visualViewport?.height ?? window.innerHeight
+      const visualOffsetTop = visualViewport?.offsetTop ?? 0
+      const layoutMatchesVisualViewport = Math.abs(window.innerHeight - visualHeight) < 2
+      const keyboardIsOpen = isKeyboardViewport(
+        stableWidth,
+        stableHeight,
+        window.innerWidth,
+        visualHeight,
+        document.activeElement?.tagName === 'INPUT',
+      )
+
+      if (!keyboardIsOpen && (layoutMatchesVisualViewport || Math.abs(window.innerWidth - stableWidth) > 80)) {
+        stableWidth = window.innerWidth
+        stableHeight = window.innerHeight
+      }
+
+      setGameViewport({
+        width: stableWidth,
+        height: stableHeight,
+        keyboardInset: calculateKeyboardInset(stableHeight, visualHeight, visualOffsetTop),
+      })
+    }
+
+    updateGameViewport()
+    window.addEventListener('resize', updateGameViewport)
+    visualViewport?.addEventListener('resize', updateGameViewport)
+    visualViewport?.addEventListener('scroll', updateGameViewport)
+
+    return () => {
+      window.removeEventListener('resize', updateGameViewport)
+      visualViewport?.removeEventListener('resize', updateGameViewport)
+      visualViewport?.removeEventListener('scroll', updateGameViewport)
+    }
+  }, [])
 
   useLayoutEffect(() => {
     const container = containerRef.current
@@ -151,7 +198,16 @@ export function GameCanvas({ startingDifficulty, language, onGameOver }: GameCan
   }, [])
 
   return (
-    <div className="game-container" ref={containerRef}>
+    <div
+      className="game-container"
+      ref={containerRef}
+      style={{
+        '--game-width': `${gameViewport.width}px`,
+        '--game-height': `${gameViewport.height}px`,
+        '--keyboard-inset': `${gameViewport.keyboardInset}px`,
+        '--keyboard-offset': `${-gameViewport.keyboardInset}px`,
+      } as CSSProperties}
+    >
       <canvas
         ref={canvasRef}
         width={canvasSize.width}
@@ -159,7 +215,7 @@ export function GameCanvas({ startingDifficulty, language, onGameOver }: GameCan
         className="game-canvas"
       />
       <HUD score={hudState.score} combo={hudState.combo} lives={hudState.lives} level={hudState.level} />
-      <InputBar onInput={handleInput} />
+      <InputBar onInput={handleInput} keyboardInset={gameViewport.keyboardInset} />
     </div>
   )
 }

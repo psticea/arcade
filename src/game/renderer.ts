@@ -38,28 +38,34 @@ export function renderWords(ctx: CanvasRenderingContext2D, words: FallingWord[])
     const textWidth = ctx.measureText(word.text).width
     const tileWidth = textWidth + paddingX * 2
     const tileHeight = fontSize + paddingY * 2
+    const entranceProgress = Math.min(1, (word.age ?? 1) / 0.2)
+    const easedEntrance = 1 - Math.pow(1 - entranceProgress, 3)
+    const displayY = word.y - (1 - easedEntrance) * 10
 
+    ctx.save()
+    ctx.globalAlpha = easedEntrance
     ctx.shadowColor = 'transparent'
     ctx.shadowBlur = 0
     ctx.fillStyle = 'rgba(29, 41, 48, 0.38)'
-    ctx.fillRect(word.x + 3, word.y + 3, tileWidth, tileHeight)
+    ctx.fillRect(word.x + 3, displayY + 3, tileWidth, tileHeight)
     ctx.fillStyle = word.targeted ? '#e7d796' : '#f7f7f3'
-    ctx.fillRect(word.x, word.y, tileWidth, tileHeight)
+    ctx.fillRect(word.x, displayY, tileWidth, tileHeight)
     ctx.strokeStyle = '#1d2930'
     ctx.lineWidth = 2
-    ctx.strokeRect(word.x, word.y, tileWidth, tileHeight)
+    ctx.strokeRect(word.x, displayY, tileWidth, tileHeight)
 
     if (word.matchedChars > 0) {
       ctx.fillStyle = '#b05f50'
-      ctx.fillText(matched, word.x + paddingX, word.y + paddingY)
+      ctx.fillText(matched, word.x + paddingX, displayY + paddingY)
 
       const matchedWidth = ctx.measureText(matched).width
       ctx.fillStyle = '#1d2930'
-      ctx.fillText(remaining, word.x + paddingX + matchedWidth, word.y + paddingY)
+      ctx.fillText(remaining, word.x + paddingX + matchedWidth, displayY + paddingY)
     } else {
       ctx.fillStyle = '#1d2930'
-      ctx.fillText(word.text, word.x + paddingX, word.y + paddingY)
+      ctx.fillText(word.text, word.x + paddingX, displayY + paddingY)
     }
+    ctx.restore()
   }
 }
 

@@ -2,9 +2,10 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 
 interface InputBarProps {
   onInput: (value: string) => string
+  keyboardInset?: number
 }
 
-export function InputBar({ onInput }: InputBarProps) {
+export function InputBar({ onInput, keyboardInset = 0 }: InputBarProps) {
   const [value, setValue] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -38,7 +39,10 @@ export function InputBar({ onInput }: InputBarProps) {
   )
 
   return (
-    <div className="input-bar">
+    <div
+      className="input-bar"
+      style={{ transform: `translate3d(0, ${-keyboardInset}px, 0)` }}
+    >
       <input
         ref={inputRef}
         type="text"

@@ -170,6 +170,24 @@
 
       .control-label { margin: 0 0 12px; font-size: 13px; font-weight: 800; }
 
+      .language-demo {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+
+      .language-demo span {
+        flex: 1;
+        padding: 7px 6px;
+        border: 1px solid currentColor;
+        text-align: center;
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .language-demo .active { background: currentColor; }
+      .language-demo .active b { color: var(--language-active-text, #fff); }
+
       .difficulty {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
@@ -301,6 +319,94 @@
       .arena .play { outline: 2px solid #fff; outline-offset: 3px; }
       .arena { --button-bg: #f8e83a; --button-text: #111; }
 
+      /* 11-20: quieter, playful directions */
+      .meadow { color: #263d34; background: #dce7df; font-family: "Trebuchet MS", sans-serif; }
+      .meadow::before { content: ""; position: absolute; width: 180px; height: 180px; left: -70px; bottom: -80px; border-radius: 50%; background: #e4b59d; }
+      .meadow .logo { color: #315e4c; }
+      .meadow .word { border-radius: 12px 12px 12px 3px; background: #f7f7f3; border-color: #789487; }
+      .meadow .controls { background: rgba(247,247,243,.72); }
+      .meadow .difficulty span { border-radius: 5px; }
+      .meadow .difficulty .active { background: #315e4c; color: #fff; }
+      .meadow { --button-bg: #b96858; }
+
+      .puzzle { color: #27343d; background: #dce3e8; font-family: "Segoe UI", sans-serif; }
+      .puzzle::before, .puzzle::after { content: ""; position: absolute; border-radius: 50%; background: #d6b968; opacity: .7; }
+      .puzzle::before { width: 120px; height: 120px; left: 34%; top: -54px; }
+      .puzzle::after { width: 80px; height: 80px; left: -32px; bottom: 46px; background: #b7796d; }
+      .puzzle .brand { border-right: 1px solid #9aa9b2; }
+      .puzzle .controls { background: #f5f5f1; }
+      .puzzle .word { border: 0; border-radius: 4px; background: #fff; box-shadow: 2px 2px 0 #9aa9b2; }
+      .puzzle .difficulty .active { background: #5c7c8d; color: #fff; }
+      .puzzle { --button-bg: #b56f62; }
+
+      .notebook { color: #303943; background: #fbfbf8; font-family: Georgia, serif; }
+      .notebook::before { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(0deg, transparent 0 27px, #cfdde6 27px 28px); opacity: .65; }
+      .notebook .brand { border-left: 2px solid #d89589; }
+      .notebook .logo { color: #355d73; font-weight: 700; }
+      .notebook .word { border-width: 0 0 2px; background: #fbfbf8; }
+      .notebook .controls { margin: 22px; background: #fbfbf8; box-shadow: 0 5px 18px rgba(48,57,67,.12); }
+      .notebook .difficulty .active { background: #e6cf72; }
+      .notebook { --button-bg: #355d73; }
+
+      .clouds { color: #334653; background: #cddde5; font-family: "Trebuchet MS", sans-serif; }
+      .clouds::before { content: ""; position: absolute; width: 260px; height: 90px; left: 34px; bottom: 42px; border-radius: 60px; background: rgba(247,247,243,.76); box-shadow: 85px -38px 0 -8px rgba(247,247,243,.76); }
+      .clouds .logo { color: #486b7c; }
+      .clouds .word { border: 0; border-radius: 16px; background: #f7f7f3; }
+      .clouds .controls { background: rgba(247,247,243,.86); }
+      .clouds .difficulty span, .clouds .language-demo span { border-radius: 14px; }
+      .clouds .difficulty .active { background: #718f9e; color: #fff; }
+      .clouds { --button-bg: #b77669; }
+
+      .library { color: #f1eee8; background: #59434a; font-family: Georgia, serif; }
+      .library .brand { border-right: 1px solid #a78d91; }
+      .library .logo { color: #dfc989; font-weight: 400; }
+      .library .number { width: fit-content; padding: 5px 8px; border: 1px solid #dfc989; }
+      .library .word { border-color: #c9b7ad; }
+      .library .controls { background: #f1eee8; color: #43343a; }
+      .library .difficulty .active { background: #756055; color: #fff; }
+      .library { --button-bg: #78525b; }
+
+      .metro { color: #29343a; background: #f3f3ef; font-family: Arial, sans-serif; }
+      .metro::before { content: ""; position: absolute; left: 30px; right: 30px; top: 62%; height: 5px; background: #7695a0; box-shadow: 0 10px 0 #c48675; }
+      .metro .logo { color: #334d59; font-size: 48px; }
+      .metro .word { border-radius: 50%; background: #f3f3ef; }
+      .metro .controls { border-left: 1px solid #bfc7ca; background: rgba(255,255,255,.8); }
+      .metro .difficulty .active { background: #c48675; color: #fff; }
+      .metro { --button-bg: #486773; }
+
+      .pencil { color: #343b3e; background: #ecefeb; font-family: "Trebuchet MS", sans-serif; }
+      .pencil::before { content: ""; position: absolute; width: 320px; height: 18px; left: -40px; top: 74%; background: #d1b65f; transform: rotate(-8deg); border-radius: 2px; }
+      .pencil .logo { color: #4e6c75; }
+      .pencil .tagline { color: #596367; }
+      .pencil .word { border: 0; border-bottom: 2px solid #a96e64; }
+      .pencil .controls { background: #f8f8f5; }
+      .pencil .difficulty .active { background: #d7c477; }
+      .pencil { --button-bg: #a96e64; }
+
+      .drawer { color: #263238; background: #91a9b2; font-family: "Segoe UI", sans-serif; }
+      .drawer .brand { margin: 18px 0 18px 18px; background: #e4e6df; border: 1px solid #53656b; }
+      .drawer .controls { margin: 18px; background: #d7b4aa; border: 1px solid #69534e; }
+      .drawer .logo { color: #425f69; }
+      .drawer .word { border-radius: 5px; background: #f5f5f1; box-shadow: 2px 2px 0 rgba(38,50,56,.26); }
+      .drawer .difficulty .active { background: #536f78; color: #fff; }
+      .drawer { --button-bg: #344c54; }
+
+      .chalk { color: #eef0e9; background: #304f47; font-family: "Courier New", monospace; }
+      .chalk::after { content: ""; position: absolute; inset: 14px; border: 1px dashed rgba(238,240,233,.38); pointer-events: none; }
+      .chalk .logo { color: #e4d592; font-weight: 400; }
+      .chalk .word { border-style: dashed; transform: rotate(-2deg); }
+      .chalk .controls { background: rgba(28,52,46,.64); border-left: 1px solid #80978f; }
+      .chalk .difficulty .active { background: #e4d592; color: #304f47; }
+      .chalk { --button-bg: #b87366; }
+
+      .planes { color: #2c424d; background: #dbe6ea; font-family: "Trebuchet MS", sans-serif; }
+      .planes::before { content: ""; position: absolute; left: 42%; top: 55px; width: 0; height: 0; border-top: 34px solid transparent; border-bottom: 34px solid transparent; border-left: 72px solid rgba(255,255,255,.72); transform: rotate(-14deg); }
+      .planes .logo { color: #426675; }
+      .planes .word { border: 0; border-bottom: 1px solid #6d8994; }
+      .planes .controls { margin: 20px; background: #f7f7f3; box-shadow: 0 8px 22px rgba(44,66,77,.12); }
+      .planes .difficulty .active { background: #76929d; color: #fff; }
+      .planes { --button-bg: #b96f61; }
+
       @media (max-width: 900px) {
         .gallery { grid-template-columns: 1fr; }
       }
@@ -330,7 +436,7 @@
     <header class="gallery-header">
       <div>
         <h1>Choose the next Wordfall interface</h1>
-        <p>Ten distinct start-screen directions using the same game controls. Select one concept and use its number when describing any changes you want.</p>
+        <p>Twenty distinct start-screen directions using the same game controls. Directions 11-20 are quieter and playful. Select one concept and use its number when describing changes.</p>
       </div>
       <div class="selection-status" aria-live="polite">No direction selected</div>
     </header>
@@ -353,6 +459,10 @@
             </div>
           </section>
           <section class="controls">
+            <p class="control-label">Word language</p>
+            <div class="language-demo">
+              <span class="active"><b>English</b></span><span>Romana</span>
+            </div>
             <p class="control-label">Starting difficulty</p>
             <div class="difficulty">
               <span>Easy</span><span class="active">Medium</span><span>Hard</span><span>Expert</span>
@@ -382,6 +492,16 @@
         ['terminal', 'Phosphor Terminal', 'Minimal, retro-computing, focused'],
         ['garden', 'Midnight Garden', 'Unexpected, elegant, atmospheric'],
         ['arena', 'Chromatic Arena', 'Bold, youthful, tournament energy'],
+        ['meadow', 'Meadow Tiles', 'Soft game pieces with a friendly garden rhythm'],
+        ['puzzle', 'Puzzle Desk', 'Modular, tactile, calm problem-solving energy'],
+        ['notebook', 'Notebook Tabs', 'Familiar ruled paper with tidy controls'],
+        ['clouds', 'Cloud Parade', 'Airy shapes and gentle rounded word tokens'],
+        ['library', 'Library Stamps', 'Bookish, collected, quietly competitive'],
+        ['metro', 'Metro Map', 'Clear routes, station markers, restrained color'],
+        ['pencil', 'Pencil Case', 'Handmade school-desk cues without visual noise'],
+        ['drawer', 'Toy Drawer', 'Organized compartments and muted toy colors'],
+        ['chalk', 'Chalk Club', 'Low-key classroom play with hand-drawn details'],
+        ['planes', 'Paper Planes', 'Light, spacious, and gently adventurous'],
       ]
 
       const gallery = document.querySelector('#gallery')

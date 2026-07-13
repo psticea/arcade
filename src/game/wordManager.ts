@@ -12,6 +12,7 @@ export interface FallingWord {
   speed: number
   matchedChars: number
   targeted: boolean
+  age?: number
 }
 
 const MAX_RECENT = 40
@@ -60,11 +61,16 @@ export function spawnWord(
     speed,
     matchedChars: 0,
     targeted: false,
+    age: 0,
   }
 }
 
 export function updateWords(wordList: FallingWord[], dt: number): FallingWord[] {
-  return wordList.map((w) => ({ ...w, y: w.y + w.speed * dt }))
+  return wordList.map((word) => ({
+    ...word,
+    y: word.y + word.speed * dt,
+    age: (word.age ?? 0) + dt,
+  }))
 }
 
 export function findMatchingWord(
