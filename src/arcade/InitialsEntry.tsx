@@ -8,6 +8,7 @@ const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 '
 interface Props {
   score: number
   onSubmit: (initials: string) => void
+  touch?: boolean
 }
 
 /**
@@ -17,7 +18,7 @@ interface Props {
  * faster than React re-renders, and reading them from a stale closure meant a
  * quick triple-tap of SPACE never reached the commit.
  */
-export function InitialsEntry({ score, onSubmit }: Props) {
+export function InitialsEntry({ score, onSubmit, touch }: Props) {
   const lettersRef = useRef([0, 0, 0])
   const positionRef = useRef(0)
   const submittedRef = useRef(false)
@@ -30,17 +31,21 @@ export function InitialsEntry({ score, onSubmit }: Props) {
     onSubmit(initials || 'AAA')
   }
 
+  /** Step one slot's letter, shared by the keyboard and the touch buttons. */
+  const cycle = (slot: number, delta: number) => {
+    const value = lettersRef.current[slot] ?? 0
+    lettersRef.current[slot] = (value + delta + ALPHABET.length) % ALPHABET.length
+    positionRef.current = slot
+    forceRender()
+  }
+
   useMenuKeys((code) => {
     if (submittedRef.current) return
     const audio = getAudio()
 
     if (code === 'ArrowUp' || code === 'ArrowDown') {
-      const delta = code === 'ArrowUp' ? -1 : 1
-      const at = positionRef.current
-      const value = lettersRef.current[at] ?? 0
-      lettersRef.current[at] = (value + delta + ALPHABET.length) % ALPHABET.length
+      cycle(positionRef.current, code === 'ArrowUp' ? -1 : 1)
       audio.play(SFX.move())
-      forceRender()
     } else if (code === 'ArrowLeft') {
       positionRef.current = Math.max(0, positionRef.current - 1)
       audio.play(SFX.move())
@@ -69,17 +74,39 @@ export function InitialsEntry({ score, onSubmit }: Props) {
       <div className="initials">
         {lettersRef.current.map((letterIndex, i) => {
           const character = ALPHABET[letterIndex] ?? 'A'
-          return (
-            <span
-              key={i}
-              className={`initial${i === positionRef.current ? ' is-active' : ''}`}
-            >
+          const active = i === positionRef.current
+          return touch ? (
+            <div key={i} className="initial-column">
+              <button
+                type="button"
+                className="initial-step"
+                onClick={() => { cycle(i, -1); getAudio().play(SFX.move()) }}
+                aria-label={`Previous letter for position ${i + 1}`}
+              >▲</button>
+              <span className={`initial${active ? ' is-active' : ''}`}>
+                {character === ' ' ? '_' : character}
+              </span>
+              <button
+                type="button"
+                className="initial-step"
+                onClick={() => { cycle(i, 1); getAudio().play(SFX.move()) }}
+                aria-label={`Next letter for position ${i + 1}`}
+              >▼</button>
+            </div>
+          ) : (
+            <span key={i} className={`initial${active ? ' is-active' : ''}`}>
               {character === ' ' ? '_' : character}
             </span>
           )
         })}
       </div>
-      <p className="overlay-hint">↑↓ letter · ←→ position · SPACE confirm</p>
+      {touch ? (
+        <button type="button" className="overlay-button is-primary" onClick={commit}>
+          CONFIRM
+        </button>
+      ) : (
+        <p className="overlay-hint">↑↓ letter · ←→ position · SPACE confirm</p>
+      )}
     </div>
   )
 }

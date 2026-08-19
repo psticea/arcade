@@ -80,5 +80,9 @@ export interface GameDefinition {
   space: string
   accent: string
   modes: GameMode[]
+  /** Which of the five keys this game uses, for the on-screen touch controls. */
+  touchKeys: readonly ArcadeKey[]
+  /** Short verb for the touch action button, e.g. "BLOOM". */
+  actionLabel: string
   load: () => Promise<{ default: GameModule }>
 }

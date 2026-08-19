@@ -192,9 +192,15 @@ body,
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: 8px 22px;
+  padding: 10px 22px;
+  min-height: 44px;
+  background: transparent;
   border: 1px solid transparent;
   border-radius: 8px;
+  color: inherit;
+  font-family: inherit;
+  text-align: center;
+  cursor: pointer;
 }
 
 .mode.is-selected {
@@ -206,11 +212,37 @@ body,
   font-family: var(--font-display);
   font-size: 13px;
   letter-spacing: 0.14em;
+  color: var(--text);
 }
 
 .mode-desc {
   font-size: 11px;
   color: var(--text-dim);
+}
+
+/* The explicit way to start a game — a hidden second tap was undiscoverable. */
+.play-button {
+  min-height: 48px;
+  padding: 13px 34px;
+  background: var(--accent);
+  border: none;
+  border-radius: 10px;
+  color: #05060d;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  cursor: pointer;
+  box-shadow: 0 8px 30px -10px var(--accent);
+  transition: transform 140ms ease, filter 140ms ease;
+}
+
+.play-button:hover {
+  filter: brightness(1.12);
+}
+
+.play-button:active {
+  transform: translateY(1px);
 }
 
 /* ===================== Host ===================== */
@@ -355,7 +387,8 @@ body,
 }
 
 .overlay-button {
-  padding: 10px 22px;
+  min-height: 44px;
+  padding: 12px 24px;
   background: transparent;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -369,6 +402,20 @@ body,
 .overlay-button:hover {
   border-color: var(--accent);
   color: var(--text);
+}
+
+.overlay-button.is-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #05060d;
+  font-weight: 700;
+}
+
+.overlay-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .stat-list {
@@ -453,6 +500,227 @@ body,
 
 @keyframes blink {
   50% { opacity: 0.4; }
+}
+
+/* ===================== Touch controls ===================== */
+
+.touch-controls {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+  touch-action: none;
+}
+
+/* Keep the HUD clear of the on-screen pause button. */
+.host[data-touch] .hud {
+  padding-right: 70px;
+}
+
+/*
+ * Shrink the play area above the d-pad so no game draws its playfield or its
+ * in-canvas readouts underneath the controls. Games size themselves from the
+ * canvas rect, so this needs no per-game handling.
+ */
+.host[data-pad] .host-canvas {
+  height: calc(100% - 164px);
+}
+
+@media (max-width: 400px) {
+  .host[data-pad] .host-canvas {
+    height: calc(100% - 150px);
+  }
+}
+
+.touch-controls button {
+  pointer-events: auto;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  font-family: var(--font-display);
+  cursor: pointer;
+}
+
+.touch-pause {
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 0px) + 12px);
+  right: 16px;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  background: rgba(10, 12, 26, 0.55);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-dim);
+  font-size: 12px;
+}
+
+.touch-pad {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 0 18px;
+  gap: 16px;
+}
+
+.touch-dpad {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.touch-row {
+  display: flex;
+  gap: 8px;
+}
+
+.touch-btn {
+  width: 62px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  background: rgba(10, 12, 26, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
+  color: var(--text);
+  font-size: 17px;
+}
+
+.touch-btn:active {
+  background: color-mix(in srgb, var(--accent) 30%, rgba(10, 12, 26, 0.6));
+  border-color: var(--accent);
+}
+
+.touch-action {
+  width: 104px;
+  height: 104px;
+  display: grid;
+  place-items: center;
+  padding: 6px;
+  background: color-mix(in srgb, var(--accent) 18%, rgba(10, 12, 26, 0.6));
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.touch-action:active {
+  background: var(--accent);
+  color: #05060d;
+}
+
+/* Games needing only SPACE turn the whole play area into one tap target. */
+.touch-anywhere {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 28px);
+  background: transparent;
+  border: none;
+  color: var(--text-faint);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+}
+
+.touch-anywhere:active {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* ===================== Initials on touch ===================== */
+
+.initial-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.initial-step {
+  width: 46px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-dim);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.initial-step:active {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+/* ===================== Small screens ===================== */
+
+@media (max-width: 560px) {
+  .picker {
+    justify-content: flex-start;
+    gap: 18px;
+    padding: 22px 16px calc(env(safe-area-inset-bottom, 0px) + 22px);
+    overflow-y: auto;
+  }
+
+  .cabinet {
+    width: 104px;
+    padding: 12px 8px 10px;
+  }
+
+  .cabinet.is-selected {
+    transform: none;
+  }
+
+  .cabinet-art {
+    width: 46px;
+    height: 46px;
+  }
+
+  .picker-detail {
+    min-height: 0;
+  }
+
+  .picker-controls {
+    gap: 18px;
+  }
+
+  .hud {
+    padding: 12px 16px;
+  }
+
+  .hud-value { font-size: 16px; }
+  .hud-score { font-size: 22px; }
+
+  .hud-gauge {
+    left: 16px;
+    top: 62px;
+    width: 118px;
+  }
+
+  .overlay-title {
+    font-size: clamp(32px, 13vw, 54px);
+  }
+
+  .stat-list {
+    gap: 16px;
+  }
+}
+
+@media (max-width: 400px) {
+  .touch-btn { width: 54px; height: 50px; }
+  .touch-action { width: 88px; height: 88px; font-size: 11px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

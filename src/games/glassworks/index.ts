@@ -49,6 +49,8 @@ const glassworks: GameModule = {
         primaryValue: String(state.missionsComplete),
         secondaryLabel: 'BALLS',
         secondaryValue: String(Math.max(0, state.ballsRemaining)),
+        gauge: state.nudgeMeter,
+        gaugeLabel: 'NUDGE',
       })
     }
 

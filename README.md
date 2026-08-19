@@ -92,6 +92,26 @@ npm test         # 160 tests
 Deployed to GitHub Pages from `main` (see `.github/workflows/deploy.yml`), which
 is why `vite.config.ts` sets `base: '/arcade/'`.
 
+## Touch
+
+The arcade is keyboard-first, but it is fully playable on a phone.
+
+On a coarse pointer the picker swaps its keyboard hints for tappable controls —
+mode rows are real buttons and there is an explicit **PLAY** button, rather than
+a second tap on the selected cabinet, which nobody could discover. In a game, an
+on-screen pad appears: a d-pad, an action button labelled with that game's verb
+(BLOOM, PLUNGE, BURN, PHASE), and a pause button. BALLAST needs only one input,
+so the whole screen is its tap target.
+
+The pad works by dispatching the same keyboard events a physical key would, so
+the games, the pause handler, the menus and the initials entry need no touch
+handling of their own — there is one input path, not two. Buttons hold their key
+while a finger is down, so thrust, flippers and the plunger charge behave exactly
+as they do on a keyboard, and a finger lifted outside a button still releases it.
+
+Games that show a pad shrink their canvas above it, so no playfield or readout
+ever sits underneath the controls.
+
 ## How it is built
 
 ```
@@ -172,5 +192,7 @@ and were resolved rather than papered over:
    asserts every gap is reachable from the previous one given sink speed and
    lateral acceleration.
 
-The arcade is also **desktop keyboard-first**, not the mobile-first design of the
-BALLAST brief — it shares a cabinet with four keyboard games.
+The arcade is also **desktop keyboard-first** in its design, rather than the
+mobile-first framing of the BALLAST brief — it shares a cabinet with four
+keyboard games. Touch is fully supported (see above), but the games were tuned
+for a keyboard.

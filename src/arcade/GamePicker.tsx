@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { GAMES } from './games.ts'
 import { useMenuKeys } from './useMenuKeys.ts'
 import { getBestScore } from './scores.ts'
+import { isTouchDevice } from './touch.ts'
 import { getAudio, SFX } from '../lib/audio.ts'
 import { formatScore } from '../lib/math.ts'
 import type { GameDefinition } from '../lib/types.ts'
@@ -10,41 +11,37 @@ interface Props {
   onSelect: (game: GameDefinition, modeId: string) => void
 }
 
-/** The home page: five cabinets, chosen with the same keys the games use. */
+/**
+ * The home page: five cabinets.
+ *
+ * Driven by the keyboard, but every control is also a real button, because a
+ * touch device has no arrow keys and no space bar. Starting a game is an
+ * explicit control rather than a second tap on the selected cabinet, which was
+ * undiscoverable.
+ */
 export function GamePicker({ onSelect }: Props) {
   const [index, setIndex] = useState(0)
   const [modeIndex, setModeIndex] = useState(0)
-  const [choosingMode, setChoosingMode] = useState(false)
 
   const game = GAMES[index]
   const audio = useMemo(() => getAudio(), [])
+  const touch = useMemo(() => isTouchDevice(), [])
 
   useEffect(() => {
     setModeIndex(0)
   }, [index])
 
+  const start = (target: GameDefinition, mode: number) => {
+    const chosen = target.modes[mode] ?? target.modes[0]
+    if (!chosen) return
+    audio.unlock()
+    audio.play(SFX.coin())
+    onSelect(target, chosen.id)
+  }
+
   useMenuKeys((code) => {
     audio.unlock()
     if (!game) return
-    if (choosingMode) {
-      if (code === 'ArrowLeft' || code === 'ArrowUp') {
-        setModeIndex((m) => (m - 1 + game.modes.length) % game.modes.length)
-        audio.play(SFX.move())
-      } else if (code === 'ArrowRight' || code === 'ArrowDown') {
-        setModeIndex((m) => (m + 1) % game.modes.length)
-        audio.play(SFX.move())
-      } else if (code === 'Space' || code === 'Enter') {
-        const mode = game.modes[modeIndex]
-        if (mode) {
-          audio.play(SFX.coin())
-          onSelect(game, mode.id)
-        }
-      } else if (code === 'Escape') {
-        audio.play(SFX.back())
-        setChoosingMode(false)
-      }
-      return
-    }
 
     if (code === 'ArrowLeft') {
       setIndex((i) => (i - 1 + GAMES.length) % GAMES.length)
@@ -52,15 +49,14 @@ export function GamePicker({ onSelect }: Props) {
     } else if (code === 'ArrowRight') {
       setIndex((i) => (i + 1) % GAMES.length)
       audio.play(SFX.move())
+    } else if (code === 'ArrowUp') {
+      setModeIndex((m) => (m - 1 + game.modes.length) % game.modes.length)
+      audio.play(SFX.move())
+    } else if (code === 'ArrowDown') {
+      setModeIndex((m) => (m + 1) % game.modes.length)
+      audio.play(SFX.move())
     } else if (code === 'Space' || code === 'Enter') {
-      audio.play(SFX.select())
-      const only = game.modes[0]
-      if (game.modes.length === 1 && only) {
-        audio.play(SFX.coin())
-        onSelect(game, only.id)
-      } else {
-        setChoosingMode(true)
-      }
+      start(game, modeIndex)
     }
   })
 
@@ -70,12 +66,17 @@ export function GamePicker({ onSelect }: Props) {
     <div className="picker">
       <header className="picker-head">
         <h1 className="picker-title">ARCADE</h1>
-        <p className="picker-sub">Five cabinets. Arrow keys and space. Nothing else.</p>
+        <p className="picker-sub">
+          {touch ? 'Five cabinets. Pick one and play.' : 'Five cabinets. Arrow keys and space. Nothing else.'}
+        </p>
       </header>
 
       <div className="cabinet-row" role="listbox" aria-label="Games">
         {GAMES.map((entry, i) => {
           const selected = i === index
+          const best = entry.modes[0]
+            ? getBestScore(window.localStorage, entry.id, entry.modes[0].id)
+            : 0
           return (
             <button
               key={entry.id}
@@ -86,48 +87,59 @@ export function GamePicker({ onSelect }: Props) {
               style={{ ['--accent' as string]: entry.accent }}
               onClick={() => {
                 audio.unlock()
-                const only = entry.modes[0]
-                if (selected) {
-                  if (entry.modes.length === 1 && only) onSelect(entry, only.id)
-                  else setChoosingMode(true)
-                } else {
+                if (selected) start(entry, modeIndex)
+                else {
                   setIndex(i)
+                  audio.play(SFX.move())
                 }
               }}
             >
               <span className="cabinet-marquee">{entry.name}</span>
               <CabinetArt id={entry.id} accent={entry.accent} />
-              <span className="cabinet-best">
-                BEST {formatScore(
-                  entry.modes[0]
-                    ? getBestScore(window.localStorage, entry.id, entry.modes[0].id)
-                    : 0,
-                )}
-              </span>
+              <span className="cabinet-best">BEST {formatScore(best)}</span>
             </button>
           )
         })}
       </div>
 
-      <div className="picker-detail" key={game.id}>
+      <div className="picker-detail" key={game.id} style={{ ['--accent' as string]: game.accent }}>
         <p className="picker-tagline">{game.tagline}</p>
-        <dl className="picker-controls">
-          <div><dt>ARROWS</dt><dd>{game.arrows}</dd></div>
-          <div><dt>SPACE</dt><dd>{game.space}</dd></div>
-        </dl>
 
-        {choosingMode ? (
-          <div className="mode-list">
+        {game.modes.length > 1 && (
+          <div className="mode-list" role="radiogroup" aria-label="Mode">
             {game.modes.map((mode, i) => (
-              <div key={mode.id} className={`mode${i === modeIndex ? ' is-selected' : ''}`}>
+              <button
+                key={mode.id}
+                type="button"
+                role="radio"
+                aria-checked={i === modeIndex}
+                className={`mode${i === modeIndex ? ' is-selected' : ''}`}
+                onClick={() => {
+                  audio.unlock()
+                  setModeIndex(i)
+                  audio.play(SFX.move())
+                }}
+              >
                 <span className="mode-name">{mode.name}</span>
                 <span className="mode-desc">{mode.description}</span>
-              </div>
+              </button>
             ))}
-            <p className="picker-hint">↑↓ choose mode · SPACE start · ESC back</p>
           </div>
-        ) : (
-          <p className="picker-hint">← → choose cabinet · SPACE insert coin</p>
+        )}
+
+        <button type="button" className="play-button" onClick={() => start(game, modeIndex)}>
+          PLAY {game.name}
+        </button>
+
+        <dl className="picker-controls">
+          <div><dt>{touch ? 'PAD' : 'ARROWS'}</dt><dd>{game.arrows}</dd></div>
+          <div><dt>{touch ? game.actionLabel : 'SPACE'}</dt><dd>{game.space}</dd></div>
+        </dl>
+
+        {!touch && (
+          <p className="picker-hint">
+            ← → cabinet{game.modes.length > 1 ? ' · ↑ ↓ mode' : ''} · SPACE insert coin
+          </p>
         )}
       </div>
     </div>

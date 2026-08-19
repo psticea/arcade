@@ -13,7 +13,6 @@ import {
 } from './simulation.ts'
 import { glowDot, neonLine, strokeNeonPath } from '../../lib/neon.ts'
 import { renderParticles, type Juice } from '../../lib/juice.ts'
-import { clamp } from '../../lib/math.ts'
 
 export function render(
   ctx: CanvasRenderingContext2D,
@@ -148,7 +147,7 @@ function drawBalls(ctx: CanvasRenderingContext2D, state: GlassworksState): void 
   }
 }
 
-/** Ball count, tilt meter and the rebuild announcement. */
+/** In-world announcements only: the HUD carries score, balls and the tilt meter. */
 function drawStatus(
   ctx: CanvasRenderingContext2D,
   state: GlassworksState,
@@ -156,49 +155,38 @@ function drawStatus(
   height: number,
 ): void {
   ctx.save()
-  ctx.font = '10px Orbitron, monospace'
-  ctx.textAlign = 'left'
-  ctx.fillStyle = 'rgba(233,236,245,0.4)'
-  ctx.fillText(`BALL ${Math.max(1, 4 - state.ballsRemaining)} / 3`, 24, height - 52)
+  ctx.textAlign = 'center'
 
   if (state.multiball) {
+    ctx.font = '11px Orbitron, monospace'
     ctx.fillStyle = '#ff5ce1'
-    ctx.fillText('MULTIBALL', 24, height - 36)
+    ctx.fillText('MULTIBALL', width / 2, 84)
   }
 
-  // Tilt meter: fills as you lean on the table.
-  const meterWidth = 120
-  ctx.fillStyle = 'rgba(255,255,255,0.12)'
-  ctx.fillRect(24, height - 26, meterWidth, 4)
-  ctx.fillStyle = state.nudgeMeter > 0.7 ? '#ff4d6d' : '#ffd166'
-  ctx.fillRect(24, height - 26, meterWidth * clamp(state.nudgeMeter, 0, 1), 4)
-  ctx.fillStyle = 'rgba(233,236,245,0.32)'
-  ctx.fillText('NUDGE', 24, height - 32)
-
   if (state.tilted) {
-    ctx.textAlign = 'center'
     ctx.font = '28px Orbitron, monospace'
     ctx.fillStyle = '#ff4d6d'
     ctx.globalAlpha = 0.5 + 0.5 * Math.sin(state.elapsed * 12)
     ctx.fillText('TILT', width / 2, height / 2)
+    ctx.globalAlpha = 1
   }
 
   if (state.phase === 'plunger') {
-    ctx.textAlign = 'center'
-    ctx.font = '11px Orbitron, monospace'
-    ctx.fillStyle = 'rgba(233,236,245,0.55)'
-    ctx.fillText('HOLD SPACE TO CHARGE — RELEASE TO LAUNCH', width / 2, height - 60)
+    // Kept high in the frame so it never sits over the flippers, which is
+    // where the on-screen controls live on a touch device.
+    ctx.font = '10px Orbitron, monospace'
+    ctx.fillStyle = 'rgba(233,236,245,0.6)'
+    ctx.fillText('HOLD TO CHARGE — RELEASE TO LAUNCH', width / 2, 104)
 
-    const barWidth = 160
+    const barWidth = 150
     ctx.fillStyle = 'rgba(255,255,255,0.12)'
-    ctx.fillRect(width / 2 - barWidth / 2, height - 50, barWidth, 6)
+    ctx.fillRect(width / 2 - barWidth / 2, 112, barWidth, 5)
     ctx.fillStyle = '#00fff2'
-    ctx.fillRect(width / 2 - barWidth / 2, height - 50, barWidth * state.plungerPower, 6)
+    ctx.fillRect(width / 2 - barWidth / 2, 112, barWidth * state.plungerPower, 5)
   }
 
   if (state.phase === 'rebuilding') {
     const progress = 1 - state.rebuildTimer / REBUILD_DURATION
-    ctx.textAlign = 'center'
     ctx.font = '30px Orbitron, monospace'
     ctx.fillStyle = '#ff5ce1'
     ctx.globalAlpha = Math.sin(progress * Math.PI)

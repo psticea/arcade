@@ -1,8 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { GameDefinition, GameInstance, HudState, GameOverPayload } from '../lib/types.ts'
 import { getAudio, SFX } from '../lib/audio.ts'
 import { formatScore } from '../lib/math.ts'
 import { InitialsEntry } from './InitialsEntry.tsx'
+import { TouchControls } from './TouchControls.tsx'
+import { isTouchDevice, pressEscape } from './touch.ts'
 import { getScores, qualifies, submitScore, type ScoreEntry } from './scores.ts'
 import { dailySeed } from '../lib/prng.ts'
 
@@ -36,6 +38,10 @@ export function GameHost({ game, modeId, onExit }: Props) {
 
   const mode = game.modes.find((m) => m.id === modeId) ?? game.modes[0]
   const modeName = mode?.name ?? modeId
+  const touch = useMemo(() => isTouchDevice(), [])
+  // Games with a d-pad need the playfield to end above the controls; the
+  // tap-anywhere games do not, since their control is the whole screen.
+  const showsPad = touch && game.touchKeys.length > 1
 
   // Mount the game module. Re-runs on restart via runKey.
   useEffect(() => {
@@ -146,10 +152,24 @@ export function GameHost({ game, modeId, onExit }: Props) {
   }, [result, game.id, modeId])
 
   return (
-    <div className="host" style={{ ['--accent' as string]: game.accent }}>
+    <div
+      className="host"
+      data-touch={touch ? 'true' : undefined}
+      data-pad={showsPad ? 'true' : undefined}
+      style={{ ['--accent' as string]: game.accent }}
+    >
       <canvas ref={canvasRef} className="host-canvas" tabIndex={0} aria-label={`${game.name} play area`} />
 
       {phase === 'playing' && hud && <Hud hud={hud} gameName={game.name} />}
+
+      {phase === 'playing' && touch && (
+        <TouchControls
+          keys={game.touchKeys}
+          actionLabel={game.actionLabel}
+          tapAnywhere={game.touchKeys.length === 1}
+          onPause={pressEscape}
+        />
+      )}
 
       {phase === 'loading' && (
         <div className="overlay">
@@ -169,13 +189,16 @@ export function GameHost({ game, modeId, onExit }: Props) {
       {phase === 'paused' && (
         <div className="overlay">
           <p className="overlay-title">PAUSED</p>
-          <p className="overlay-hint">ESC resume</p>
+          <button type="button" className="overlay-button is-primary" onClick={pressEscape}>
+            RESUME
+          </button>
           <button type="button" className="overlay-button" onClick={onExit}>QUIT TO ARCADE</button>
+          {!touch && <p className="overlay-hint">ESC resume</p>}
         </div>
       )}
 
       {phase === 'initials' && result && (
-        <InitialsEntry score={result.score} onSubmit={handleInitials} />
+        <InitialsEntry score={result.score} onSubmit={handleInitials} touch={touch} />
       )}
 
       {phase === 'gameover' && result && (
@@ -202,7 +225,13 @@ export function GameHost({ game, modeId, onExit }: Props) {
               ))}
             </ol>
           )}
-          <p className="overlay-hint">SPACE play again · ESC arcade</p>
+          <div className="overlay-actions">
+            <button type="button" className="overlay-button is-primary" onClick={restart}>
+              PLAY AGAIN
+            </button>
+            <button type="button" className="overlay-button" onClick={onExit}>ARCADE</button>
+          </div>
+          {!touch && <p className="overlay-hint">SPACE play again · ESC arcade</p>}
         </div>
       )}
     </div>
