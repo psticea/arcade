@@ -625,18 +625,19 @@ body,
  *
  * Sized from where thumbs actually rest rather than from a grid — the corners
  * are reachable one-handed on a 390px phone, the middle of the bottom edge is
- * not. Everything clears 44px comfortably; the thrust key a lander holds for
- * most of a run is far larger than that.
+ * not. Buttons are deliberately well past the 44px minimum and pushed hard into
+ * the corners, because the failure mode on a phone is not mis-tapping a target,
+ * it is having to re-grip to reach one.
  */
 .touch-split {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  padding: 0 12px;
+  padding: 0 10px;
   pointer-events: none;
 }
 
@@ -654,15 +655,15 @@ body,
 }
 
 .touch-round {
-  width: 78px;
-  height: 78px;
+  width: 86px;
+  height: 86px;
   display: grid;
   place-items: center;
   background: rgba(10, 12, 26, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 50%;
   color: var(--text);
-  font-size: 22px;
+  font-size: 24px;
   backdrop-filter: blur(2px);
 }
 
@@ -672,8 +673,8 @@ body,
 }
 
 .touch-thrust {
-  width: 108px;
-  height: 108px;
+  width: 120px;
+  height: 120px;
   display: grid;
   place-items: center;
   padding: 6px;
@@ -681,7 +682,7 @@ body,
   border: 2px solid var(--accent);
   border-radius: 50%;
   color: var(--text);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.1em;
   backdrop-filter: blur(2px);
@@ -693,16 +694,16 @@ body,
 }
 
 .touch-minor {
-  min-width: 84px;
-  height: 46px;
+  min-width: 96px;
+  height: 54px;
   padding: 0 14px;
   display: grid;
   place-items: center;
   background: rgba(10, 12, 26, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 23px;
+  border-radius: 27px;
   color: var(--text-dim);
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.1em;
   backdrop-filter: blur(2px);
 }
@@ -720,16 +721,16 @@ body,
 
 /* One-handed on a small phone: keep the clusters inside thumb arc. */
 @media (max-width: 380px) {
-  .touch-round { width: 68px; height: 68px; }
-  .touch-thrust { width: 94px; height: 94px; }
-  .touch-minor { min-width: 74px; height: 42px; }
+  .touch-round { width: 76px; height: 76px; }
+  .touch-thrust { width: 108px; height: 108px; }
+  .touch-minor { min-width: 86px; height: 48px; }
 }
 
 /* Landscape has far less height: shrink rather than overlap the playfield. */
 @media (orientation: landscape) and (max-height: 460px) {
-  .touch-round { width: 62px; height: 62px; }
-  .touch-thrust { width: 84px; height: 84px; }
-  .touch-minor { height: 38px; min-width: 70px; }
+  .touch-round { width: 66px; height: 66px; font-size: 20px; }
+  .touch-thrust { width: 92px; height: 92px; }
+  .touch-minor { height: 44px; min-width: 78px; }
   .touch-split { bottom: calc(env(safe-area-inset-bottom, 0px) + 6px); }
 }
 

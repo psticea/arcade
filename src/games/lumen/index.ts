@@ -9,22 +9,46 @@ import {
 } from '../../lib/juice.ts'
 import { fitCanvas } from '../../lib/neon.ts'
 import { getAudio, type DroneHandle } from '../../lib/audio.ts'
-import { LIGHT_CAPACITY, createState, step, type LumenState } from './simulation.ts'
-import { render } from './renderer.ts'
+import { formatScore } from '../../lib/math.ts'
+import {
+  BOONS, LAMP_CAPACITY, LANTERN_CAPACITY, createState, huntingCount, step,
+  type LumenState,
+} from './simulation.ts'
+import { pointAt, render } from './renderer.ts'
+
+/**
+ * LUMEN — the shell side: input, audio, juice and the HUD.
+ *
+ * The audio is adaptive rather than decorative. Two drones run for the whole
+ * run: one tuned to how much light is left in the world, which sags as you lose
+ * ground, and one that only exists while something is walking the rim toward
+ * you. You can hear a hunter turn before you see it, which is the difference
+ * between the dark being atmospheric and the dark being information.
+ */
+
+const TITLE_HOLD = 2.6
+const POUR_TICK = 0.1
 
 const lumen: GameModule = {
   mount(canvas: HTMLCanvasElement, options: GameOptions): GameInstance {
     const emitter = createEmitter()
     const rng = createRng(options.seed)
     const input = createInputManager()
-    const juice = createJuice(512)
+    const juice = createJuice(640)
     const audio = getAudio()
 
     const state: LumenState = createState(rng)
     let size = fitCanvas(canvas)
     let finished = false
-    let drone: DroneHandle | undefined
-    let lastMultiplier = state.multiplier
+    let titleFade = TITLE_HOLD
+    let pourTimer = 0
+    let hum: DroneHandle | undefined
+    let dread: DroneHandle | undefined
+    let dreadLevel = 0
+
+    const calm = typeof window !== 'undefined'
+      && typeof window.matchMedia === 'function'
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
     const ctx = canvas.getContext('2d')
     if (!ctx) throw new Error('Canvas 2D is not available in this browser')
@@ -32,39 +56,48 @@ const lumen: GameModule = {
     const onResize = () => { size = fitCanvas(canvas) }
     window.addEventListener('resize', onResize)
 
-    const radius = () => Math.min(size.width, size.height) * 0.42
-    const toScreen = (angle: number, depth: number) => {
-      const theta = (angle / state.segments) * Math.PI * 2 - Math.PI / 2
-      const r = depth * radius()
-      return { x: Math.cos(theta) * r, y: Math.sin(theta) * r }
-    }
+    // Reduced motion damps the camera but never the simulation, so the game is
+    // the same game — it just stops throwing the screen around.
+    const trauma = (amount: number) => juice.addTrauma(calm ? amount * 0.3 : amount)
+
+    const held = { pour: false, draw: false }
 
     const emitHud = () => {
       emitter.emit('hud', {
         score: state.score,
         primaryLabel: 'MULT',
         primaryValue: `x${state.multiplier}`,
-        secondaryLabel: 'WAVE',
-        secondaryValue: String(state.wave + 1),
-        gauge: state.light / LIGHT_CAPACITY,
-        gaugeLabel: 'LIGHT',
+        secondaryLabel: 'WATCH',
+        secondaryValue: String(state.watch + 1),
+        gauge: state.lantern / LANTERN_CAPACITY,
+        gaugeLabel: 'LANTERN',
       })
     }
 
     const finish = () => {
       if (finished) return
       finished = true
-      drone?.stop()
-      drone = undefined
-      audio.play({ frequency: 320, endFrequency: 40, duration: 1.2, waveform: 'sine', volume: 0.42 })
+      hum?.stop()
+      dread?.stop()
+      hum = undefined
+      dread = undefined
+      audio.play({ frequency: 260, endFrequency: 32, duration: 1.6, waveform: 'sine', volume: 0.45 })
+
+      const kept = Math.round(state.lightSpent)
+      const lost = Math.round(state.lightStolen)
+      const boonNames = state.boonsTaken.map((id) => BOONS[id].name)
       emitter.emit('gameover', {
         score: state.score,
-        summary: 'The last of the light left the well. The tunnel went dark.',
+        summary: lost > kept
+          ? `The shades drank ${formatScore(lost)} light out of the ring and the lamps only burned ${formatScore(kept)}. You were robbed, not outlasted.`
+          : `The lamps burned ${formatScore(kept)} light and the shades took ${formatScore(lost)}. The night simply outlasted the oil.`,
         stats: [
-          { label: 'MOTES', value: String(state.motesCaught) },
-          { label: 'DEEP', value: String(state.deepCaught) },
-          { label: 'ESCAPED', value: String(state.motesEscaped) },
-          { label: 'WAVE', value: String(state.wave + 1) },
+          { label: 'WATCHES', value: String(state.watch + 1) },
+          { label: 'BURNED', value: String(state.burned) },
+          { label: 'MAWS', value: String(state.mawsBurned) },
+          { label: 'BEST BURN', value: formatScore(state.bestBurn) },
+          { label: 'PEAK MULT', value: `x${state.peakMultiplier}` },
+          { label: 'SIGNS', value: boonNames.length > 0 ? boonNames.join(' ') : 'NONE' },
         ],
       })
     }
@@ -78,65 +111,107 @@ const lumen: GameModule = {
           return
         }
 
+        held.pour = input.state.space
+        held.draw = input.state.down && !input.state.space
+        titleFade = Math.max(0, titleFade - dt)
+
         const events = step(state, {
           left: input.state.left,
           right: input.state.right,
-          dive: input.pressed('up'),
-          gatherHeld: input.heldFor('down'),
-          bloom: input.pressed('space'),
-          bloomHeld: input.heldFor('space'),
+          pour: held.pour,
+          draw: held.draw,
         }, dt, rng)
 
-        if (!drone) drone = audio.drone(55, 0.045)
-        if (state.multiplier !== lastMultiplier) {
-          lastMultiplier = state.multiplier
-          // The drone rises a semitone per multiplier tier: greed you can hear.
-          drone?.setFrequency(55 * Math.pow(2, (state.multiplier - 1) / 12))
+        if (!hum) hum = audio.drone(48, 0.05)
+        if (!dread) dread = audio.drone(126, 0)
+
+        // The base drone sags with the light left in the world, and the dread
+        // layer only speaks while something is walking the rim after you.
+        const light = state.lantern + state.lamps.reduce((sum, lamp) => sum + lamp.fuel, 0)
+        const reserve = Math.min(1, light / (LAMP_CAPACITY * 2))
+        hum?.setFrequency(38 + reserve * 26)
+        const hunters = huntingCount(state)
+        const wanted = Math.min(0.075, hunters * 0.028)
+        if (Math.abs(wanted - dreadLevel) > 0.004) {
+          dreadLevel = wanted
+          dread?.setVolume(wanted)
         }
 
-        for (const caught of events.caught ?? []) {
-          const point = toScreen(caught.angle, caught.depth)
-          const deep = caught.kind === 'deep'
-          juice.addTrauma(deep ? TRAUMA_BIG : TRAUMA_SMALL * 0.6)
-          if (deep) juice.freeze(HITSTOP_SMALL)
+        if (held.pour || held.draw) {
+          pourTimer -= dt
+          if (pourTimer <= 0) {
+            pourTimer = POUR_TICK
+            const lamp = state.lamps[Math.round(state.keeper) % state.lamps.length]
+            const fill = (lamp?.fuel ?? 0) / LAMP_CAPACITY
+            audio.play({
+              frequency: held.pour ? 300 + fill * 520 : 760 - fill * 400,
+              duration: 0.05,
+              waveform: 'triangle',
+              volume: 0.1,
+              jitter: 0.03,
+            })
+          }
+        } else {
+          pourTimer = 0
+        }
+
+        for (const burn of events.burned ?? []) {
+          const point = pointAt(size.width, size.height, burn.angle, burn.climb)
+          const big = burn.kind === 'maw'
+          trauma(big ? TRAUMA_BIG : TRAUMA_SMALL * 0.5)
+          if (big) juice.freeze(HITSTOP_SMALL)
           juice.burst(point.x, point.y, {
-            count: deep ? 22 : 9,
-            speed: [40, deep ? 240 : 150],
-            life: [0.25, deep ? 0.9 : 0.5],
-            hue: deep ? 45 : 190,
-            inward: true,
+            count: big ? 30 : 11,
+            speed: [30, big ? 250 : 140],
+            life: [0.24, big ? 0.95 : 0.5],
+            hue: big ? 32 : 44,
           })
-          audio.play(deep
-            ? { frequency: 660 + state.multiplier * 30, endFrequency: 1320, duration: 0.28, waveform: 'sine', volume: 0.38 }
-            : { frequency: 880, endFrequency: 1180, duration: 0.09, waveform: 'sine', volume: 0.2 })
+          audio.play(big
+            ? { frequency: 220, endFrequency: 880, duration: 0.5, waveform: 'sawtooth', volume: 0.34 }
+            : {
+              frequency: 620 + Math.min(8, state.multiplier) * 46,
+              endFrequency: 1240,
+              duration: 0.14,
+              waveform: 'sine',
+              volume: 0.24,
+            })
         }
 
-        if (events.escaped) {
-          juice.addTrauma(TRAUMA_BIG)
+        if (events.latched !== undefined) {
+          audio.play({ frequency: 340, endFrequency: 150, duration: 0.4, waveform: 'triangle', volume: 0.3 })
+        }
+        if (events.stolen !== undefined) {
+          trauma(TRAUMA_BIG)
           juice.freeze(HITSTOP_SMALL)
-          audio.play({ frequency: 300, endFrequency: 120, duration: 0.35, waveform: 'triangle', volume: 0.34 })
+          audio.noise(0.3, 0.34, 320)
+          audio.play({ frequency: 180, endFrequency: 70, duration: 0.45, waveform: 'sawtooth', volume: 0.3 })
         }
-        if (events.dived) {
-          audio.play({ frequency: 700, endFrequency: 220, duration: 0.4, waveform: 'sine', volume: 0.26 })
+        if (events.lampSnuffed !== undefined) {
+          audio.noise(0.22, 0.2, 700)
         }
-        if (events.diveBlocked) {
-          juice.addTrauma(TRAUMA_SMALL)
-          audio.noise(0.16, 0.28, 500)
+        if (events.lampLit !== undefined) {
+          audio.play({ frequency: 420, endFrequency: 900, duration: 0.22, waveform: 'sine', volume: 0.22 })
         }
-        if (events.gathered) {
-          juice.addTrauma(TRAUMA_SMALL)
-          audio.play({ frequency: 220, endFrequency: 880, duration: 0.6, waveform: 'sine', volume: 0.3 })
+        if (events.boon !== undefined) {
+          trauma(TRAUMA_SMALL)
+          for (const [i, frequency] of [523, 659, 784, 1046].entries()) {
+            window.setTimeout(
+              () => audio.play({ frequency, duration: 0.24, waveform: 'sine', volume: 0.26 }),
+              i * 80,
+            )
+          }
         }
-        if (events.spireDissolved !== undefined) {
-          audio.play({ frequency: 500, endFrequency: 1500, duration: 0.34, waveform: 'triangle', volume: 0.3 })
+        if (events.watchEnded !== undefined) {
+          trauma(TRAUMA_SMALL)
+          audio.play({ frequency: 392, endFrequency: 1176, duration: 1, waveform: 'sine', volume: 0.34 })
         }
-        if (events.waveCleared) {
-          juice.addTrauma(TRAUMA_BIG)
+        if (events.watchBegan !== undefined) {
+          titleFade = TITLE_HOLD
           juice.freeze(HITSTOP_LARGE)
-          audio.play({ frequency: 440, endFrequency: 1760, duration: 0.9, waveform: 'sine', volume: 0.4 })
+          audio.play({ frequency: 98, endFrequency: 74, duration: 1.4, waveform: 'triangle', volume: 0.4 })
         }
         if (events.died) {
-          juice.addTrauma(TRAUMA_CATASTROPHE)
+          trauma(TRAUMA_CATASTROPHE)
           juice.freeze(HITSTOP_HUGE)
           finish()
         }
@@ -145,7 +220,12 @@ const lumen: GameModule = {
         emitHud()
       },
       render() {
-        render(ctx, state, juice, size.width, size.height)
+        render(ctx, state, size.width, size.height, {
+          juice,
+          input: held,
+          titleFade: titleFade / TITLE_HOLD,
+          calm,
+        })
       },
     })
 
@@ -155,15 +235,18 @@ const lumen: GameModule = {
     return {
       pause() {
         loop.pause()
-        drone?.setVolume(0)
+        hum?.setVolume(0)
+        dread?.setVolume(0)
       },
       resume() {
         loop.resume()
-        drone?.setVolume(0.045)
+        hum?.setVolume(0.05)
+        dread?.setVolume(dreadLevel)
       },
       destroy() {
         loop.stop()
-        drone?.stop()
+        hum?.stop()
+        dread?.stop()
         input.destroy()
         window.removeEventListener('resize', onResize)
         emitter.clear()

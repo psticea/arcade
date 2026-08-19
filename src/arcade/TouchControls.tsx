@@ -98,11 +98,15 @@ type Binder = (key: ArcadeKey) => Record<string, unknown>
 /**
  * Steering left, power right.
  *
- * A lander needs rotation and thrust at the same moment, and a cross d-pad
- * cannot give you that: one thumb ends up covering two axes while the other
- * reaches across the screen for the action button. Splitting the two roles
- * across the bottom corners puts every control under a thumb that is already
- * resting there, and lets the buttons be much larger than a cross allows.
+ * A game needing rotation and thrust at the same moment cannot use a cross
+ * d-pad: one thumb ends up covering two axes while the other reaches across the
+ * screen for the action button. Splitting the two roles across the bottom
+ * corners puts every control under a thumb that is already resting there, and
+ * lets the buttons be much larger than a cross allows.
+ *
+ * The big button is whichever key the game holds most — `up` for a lander's
+ * thrust, `space` for anything without one — so a game with only three verbs
+ * still gets a proper primary rather than leaving the corner empty.
  */
 function SplitControls({
   uses, bind, labels, actionLabel,
@@ -112,6 +116,8 @@ function SplitControls({
   labels: GameDefinition['touchLabels']
   actionLabel: string
 }) {
+  const primary: ArcadeKey = uses('up') ? 'up' : 'space'
+
   return (
     <div className="touch-split">
       <div className="touch-steer">
@@ -125,14 +131,14 @@ function SplitControls({
             {labels?.tertiary ?? 'LOOK'}
           </button>
         )}
-        {uses('space') && (
+        {primary !== 'space' && uses('space') && (
           <button type="button" className="touch-minor is-hot" {...bind('space')}>
             {labels?.secondary ?? actionLabel}
           </button>
         )}
-        {uses('up') && (
-          <button type="button" className="touch-thrust" {...bind('up')}>
-            {labels?.primary ?? 'THRUST'}
+        {uses(primary) && (
+          <button type="button" className="touch-thrust" {...bind(primary)}>
+            {labels?.primary ?? actionLabel}
           </button>
         )}
       </div>

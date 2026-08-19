@@ -59,7 +59,12 @@ export function createInputManager(target: Window = window): InputManager {
     const key = KEY_MAP[event.code]
     if (!key) return
     event.preventDefault()
-    if (event.repeat) return
+    // An auto-repeat is not a new press, but it *is* proof the key is still
+    // down — which is the only evidence a game gets when it mounts while the
+    // player is already holding one. Dropping repeats outright meant holding
+    // SPACE through "SPACE to start" left the key unregistered until it was
+    // released and pressed again. Tracking the edge off our own state instead
+    // suppresses repeat presses without throwing the hold away.
     if (!state[key]) edges[key] = true
     state[key] = true
   }
