@@ -3,19 +3,18 @@ import { createEmitter } from '../../lib/emitter.ts'
 import { createRng } from '../../lib/prng.ts'
 import { createInputManager } from '../../lib/input.ts'
 import { createGameLoop } from '../../lib/loop.ts'
-import { createJuice, TRAUMA_SMALL, TRAUMA_CATASTROPHE, HITSTOP_HUGE } from '../../lib/juice.ts'
+import { createJuice, TRAUMA_CATASTROPHE, HITSTOP_HUGE } from '../../lib/juice.ts'
 import { fitCanvas } from '../../lib/neon.ts'
 import { getAudio, type DroneHandle } from '../../lib/audio.ts'
 import {
-  PROXIMITY_BAND,
   createState,
-  distanceToStone,
   effectiveMultiplier,
   isEarning,
   step,
   type BallastState,
 } from './simulation.ts'
 import { render } from './renderer.ts'
+import { createView, updateView } from './art/view.ts'
 
 const ballast: GameModule = {
   mount(canvas: HTMLCanvasElement, options: GameOptions): GameInstance {
@@ -26,6 +25,9 @@ const ballast: GameModule = {
     const audio = getAudio()
 
     const state: BallastState = createState(rng)
+    // Presentation animation draws from its own stream so adding a bubble never
+    // changes the shaft the player descends.
+    const view = createView(createRng(options.seed ^ 0x5bd1e5))
     let size = fitCanvas(canvas)
     let finished = false
     let drone: DroneHandle | undefined
@@ -101,29 +103,18 @@ const ballast: GameModule = {
         if (events.died) {
           juice.addTrauma(TRAUMA_CATASTROPHE)
           juice.freeze(HITSTOP_HUGE)
-          juice.burst(size.width / 2, size.height * 0.32, {
+          juice.burst(size.width / 2, size.height * 0.34, {
             count: 44, speed: [60, 300], life: [0.5, 1.4], hue: 160,
           })
           finish()
         }
 
-        // Turbulence while riding the stone: the feedback that teaches
-        // wall-riding without any tutorial text.
-        if (state.alive && isEarning(state)) {
-          const proximity = 1 - distanceToStone(state) / PROXIMITY_BAND
-          if (Math.random() < proximity * 0.55) {
-            juice.burst(size.width / 2, size.height * 0.32, {
-              count: 1, speed: [20, 70], life: [0.2, 0.5], size: [1, 2.4], hue: 150,
-            })
-          }
-          if (proximity > 0.82) juice.addTrauma(TRAUMA_SMALL * 0.08)
-        }
-
+        updateView(view, state, dt, size.width, size.height)
         input.endFrame()
         emitHud()
       },
       render() {
-        render(ctx, state, juice, size.width, size.height)
+        render(ctx, state, juice, view, size.width, size.height)
       },
     })
 

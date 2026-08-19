@@ -9,9 +9,13 @@ import {
   PLAYER_RADIUS,
   PROXIMITY_BAND,
   SHAFT_WIDTH,
+  SHOULDER_ABOVE,
+  SHOULDER_BELOW,
   createState,
+  distanceToStone,
   effectiveMultiplier,
   generateTo,
+  reachAt,
   step,
   type BallastState,
 } from '../games/ballast/simulation.ts'
@@ -179,6 +183,55 @@ describe('BALLAST physics', () => {
       return JSON.stringify(state)
     }
     expect(play()).toBe(play())
+  })
+})
+
+describe('BALLAST tooth profile', () => {
+  const tooth = { depth: 500, side: 'left' as const, reach: 58, height: 18 }
+
+  it('is at full reach across the middle of the tooth', () => {
+    expect(reachAt(tooth, 500)).toBe(58)
+    expect(reachAt(tooth, 500 - tooth.height * SHOULDER_ABOVE * 0.9)).toBe(58)
+    expect(reachAt(tooth, 500 + tooth.height * SHOULDER_BELOW * 0.9)).toBe(58)
+  })
+
+  it('returns to the wall at both ends', () => {
+    // A tooth that did not close on the wall would leave a sliver of stone
+    // hanging in open water, which is the kind of death nobody can read.
+    expect(reachAt(tooth, 500 - tooth.height)).toBe(0)
+    expect(reachAt(tooth, 500 + tooth.height)).toBe(0)
+    expect(reachAt(tooth, 500 + tooth.height * 2)).toBe(0)
+  })
+
+  it('never widens as you move away from the centre', () => {
+    let previous = Infinity
+    for (let t = 0; t <= 1; t += 0.02) {
+      const value = reachAt(tooth, 500 + t * tooth.height)
+      expect(value).toBeLessThanOrEqual(previous + 1e-9)
+      previous = value
+    }
+  })
+
+  it('sweeps back further above than below', () => {
+    // The long upper sweep and compact lower haunch are what make the form read
+    // as an arch springing out of the wall rather than a shelf bolted to it.
+    const above = reachAt(tooth, 500 - tooth.height * 0.5)
+    const below = reachAt(tooth, 500 + tooth.height * 0.5)
+    expect(above).toBeLessThan(below)
+  })
+
+  it('collision follows the drawn profile, not a bounding box', () => {
+    // The player threading the shoulder of a tooth must actually survive there,
+    // or the silhouette is lying about where the stone is.
+    const state = createState(createRng(40))
+    state.obstacles = [{ ...tooth }]
+    state.depth = 500 + tooth.height * 0.92
+    // Well inside the tooth's full reach, but past where it has tapered away.
+    state.x = tooth.reach - 10
+    expect(distanceToStone(state)).toBeGreaterThan(0)
+
+    state.depth = 500
+    expect(distanceToStone(state)).toBeLessThan(0)
   })
 })
 

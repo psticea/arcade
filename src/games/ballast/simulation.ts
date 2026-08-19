@@ -25,7 +25,7 @@ import { clamp } from '../../lib/math.ts'
  */
 
 export const SHAFT_WIDTH = 100
-export const PLAYER_RADIUS = 2.2
+export const PLAYER_RADIUS = 3
 export const WALL_MARGIN = 6
 
 export const LATERAL_GRAVITY = 120
@@ -41,7 +41,7 @@ export const MULTIPLIER_SOFT_CAP = 8
 /** Distance from the stone at which earning stops entirely. */
 export const PROXIMITY_BAND = 22
 
-export const OBSTACLE_SPACING = 50
+export const OBSTACLE_SPACING = 54
 export const MAX_SAME_WALL_RUN = 2
 
 /**
@@ -51,16 +51,44 @@ export const MAX_SAME_WALL_RUN = 2
  * reachability: the crossing it forces has to be coverable before the next one.
  */
 export const MIN_REACH = 54
-export const MAX_REACH = 62
+export const MAX_REACH = 60
 
 export interface Obstacle {
   /** Depth in metres at the centre of the tooth. */
   depth: number
   side: 'left' | 'right'
-  /** How far the tooth reaches into the shaft. */
+  /** How far the tooth reaches into the shaft at its widest. */
   reach: number
   height: number
 }
+
+/**
+ * How far a tooth reaches into the shaft at a given depth.
+ *
+ * A tooth is a carved spur, not a box: it is full width across its middle and
+ * sweeps back to the wall at both ends, further and more gently above than
+ * below. Collision reads this same profile, so the silhouette the player judges
+ * *is* the hitbox — a shoulder that looks clippable is clippable, and threading
+ * one close is a real skill rather than a cosmetic near-miss.
+ */
+export function reachAt(obstacle: Obstacle, depth: number): number {
+  const t = (depth - obstacle.depth) / obstacle.height
+  const a = Math.abs(t)
+  if (a >= 1) return 0
+  const shoulder = t < 0 ? SHOULDER_ABOVE : SHOULDER_BELOW
+  if (a <= shoulder) return obstacle.reach
+  const k = (a - shoulder) / (1 - shoulder)
+  // Smoothstep, so there is no crease where the shoulder begins.
+  return obstacle.reach * (1 - k * k * (3 - 2 * k))
+}
+
+/**
+ * Where the taper starts, as a fraction of half-height. The long upper sweep
+ * and the compact lower haunch are what make the form read as an arch springing
+ * out of the wall instead of a shelf bolted to it.
+ */
+export const SHOULDER_ABOVE = 0.16
+export const SHOULDER_BELOW = 0.4
 
 export interface BallastInput {
   flip: boolean
@@ -128,7 +156,7 @@ export function createState(rng: Rng): BallastState {
  */
 export function generateTo(state: BallastState, depth: number, rng: Rng): void {
   while (state.generatedTo < depth) {
-    const next = state.generatedTo + OBSTACLE_SPACING + rng.range(-4, 10)
+    const next = state.generatedTo + OBSTACLE_SPACING + rng.range(-3, 12)
 
     let side: 'left' | 'right'
     if (state.sameSideRun >= MAX_SAME_WALL_RUN) {
@@ -148,7 +176,7 @@ export function generateTo(state: BallastState, depth: number, rng: Rng): void {
       depth: next,
       side,
       reach: clamp(reach, MIN_REACH, MAX_REACH),
-      height: 10 + rng.range(0, 6),
+      height: 15 + rng.range(0, 7),
     })
     state.generatedTo = next
   }
@@ -211,9 +239,10 @@ export function step(
     events.died = true
   }
 
-  // Drop obstacles that are well above the player.
+  // Drop obstacles that are well above the player. The bound is generous
+  // because the renderer still draws teeth some way above the bell.
   if (state.obstacles.length > 64) {
-    state.obstacles = state.obstacles.filter((o) => o.depth > state.depth - 120)
+    state.obstacles = state.obstacles.filter((o) => o.depth > state.depth - 220)
   }
 
   return events
@@ -278,9 +307,10 @@ export function distanceToStone(state: BallastState): number {
   let rightStone = SHAFT_WIDTH
 
   for (const obstacle of state.obstacles) {
-    if (Math.abs(obstacle.depth - state.depth) > obstacle.height) continue
-    if (obstacle.side === 'left') leftStone = Math.max(leftStone, obstacle.reach)
-    else rightStone = Math.min(rightStone, SHAFT_WIDTH - obstacle.reach)
+    const reach = reachAt(obstacle, state.depth)
+    if (reach <= 0) continue
+    if (obstacle.side === 'left') leftStone = Math.max(leftStone, reach)
+    else rightStone = Math.min(rightStone, SHAFT_WIDTH - reach)
   }
 
   return Math.min(state.x - PLAYER_RADIUS - leftStone, rightStone - (state.x + PLAYER_RADIUS))
