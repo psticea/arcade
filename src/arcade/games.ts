@@ -35,6 +35,8 @@ export const GAMES: GameDefinition[] = [
     ],
     touchKeys: ['left', 'right', 'up', 'down', 'space'],
     actionLabel: 'BURN',
+    touchLayout: 'split',
+    touchLabels: { primary: 'THRUST', secondary: 'BURN', tertiary: 'SURVEY' },
     load: () => import('../games/descent/index.ts'),
   },
   {

@@ -84,5 +84,16 @@ export interface GameDefinition {
   touchKeys: readonly ArcadeKey[]
   /** Short verb for the touch action button, e.g. "BLOOM". */
   actionLabel: string
+  /**
+   * How to lay the on-screen controls out.
+   *
+   * `dpad` is the default cross plus an action button. `split` puts steering
+   * under the left thumb and power under the right, which is the only layout
+   * that works for a game needing both at once — a cross forces one thumb to
+   * cover two axes and the other to reach across the screen.
+   */
+  touchLayout?: 'dpad' | 'split'
+  /** Labels for the `split` layout's right-hand cluster. */
+  touchLabels?: { primary: string; secondary?: string; tertiary?: string }
   load: () => Promise<{ default: GameModule }>
 }

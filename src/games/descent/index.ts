@@ -12,10 +12,10 @@ import { getAudio, type DroneHandle } from '../../lib/audio.ts'
 import {
   FUEL_CAPACITY, createState, nextCavern, step, type DescentState,
 } from './simulation.ts'
-import { createCamera, render, updateCamera } from './renderer.ts'
+import { createView, render, updateView } from './renderer.ts'
 
 /** Beat between a resolved landing and the next cavern, so the result lands. */
-const CAVERN_PAUSE = 1.4
+const CAVERN_PAUSE = 1.6
 
 const descent: GameModule = {
   mount(canvas: HTMLCanvasElement, options: GameOptions): GameInstance {
@@ -24,12 +24,15 @@ const descent: GameModule = {
     const input = createInputManager()
     const juice = createJuice(400)
     const audio = getAudio()
-    const camera = createCamera()
 
     const state: DescentState = createState(rng, options.seed)
+    // Presentation draws from its own stream, so adding a dust mote never
+    // changes the cavern the pilot is flying.
+    const view = createView(createRng(options.seed ^ 0x2b1c4d), state)
     let size = fitCanvas(canvas)
     let finished = false
     let transition = 0
+    let hardBurn = false
     let thrustDrone: DroneHandle | undefined
 
     const ctx = canvas.getContext('2d')
@@ -57,9 +60,10 @@ const descent: GameModule = {
       thrustDrone = undefined
       audio.play({ frequency: 180, endFrequency: 48, duration: 0.9, waveform: 'sawtooth', volume: 0.42 })
 
+      const landing = state.lastLanding
       const summary = reason === 'dry'
         ? 'Tanks dry. The drone came down where it fell.'
-        : state.lastLanding && state.lastLanding.padMultiplier === 0
+        : landing && landing.padMultiplier === 0
           ? 'Touched down off-pad. The drone tipped over.'
           : 'Came in too hard. The drone tipped over.'
 
@@ -86,6 +90,10 @@ const descent: GameModule = {
 
         if (state.phase === 'landed') {
           transition += dt
+          updateView(view, state, {
+            thrusting: false, hardBurn: false, groundEffect: 0,
+            scraped: false, landed: false, wrecked: false,
+          }, dt)
           if (transition >= CAVERN_PAUSE) {
             transition = 0
             nextCavern(state, rng)
@@ -95,7 +103,7 @@ const descent: GameModule = {
           return
         }
 
-        const hardBurn = input.state.space
+        hardBurn = input.state.space
         const events = step(state, {
           rotateLeft: input.state.left,
           rotateRight: input.state.right,
@@ -108,22 +116,13 @@ const descent: GameModule = {
           if (!thrustDrone) thrustDrone = audio.drone(70, 0.05)
           thrustDrone?.setFrequency(hardBurn ? 130 : 78)
           thrustDrone?.setVolume(hardBurn ? 0.1 : 0.05)
-          const ship = state.ship
-          juice.burst(
-            ship.x - Math.sin(ship.angle) * 0.7,
-            ship.y + Math.cos(ship.angle) * 0.7,
-            {
-              count: hardBurn ? 3 : 1,
-              speed: [2, 7],
-              life: [0.1, 0.3],
-              size: [0.05, 0.14],
-              hue: hardBurn ? 20 : 38,
-              angle: state.ship.angle + Math.PI / 2,
-              spread: 0.7,
-            },
-          )
         } else {
           thrustDrone?.setVolume(0)
+        }
+
+        if (events.scraped) {
+          juice.addTrauma(TRAUMA_SMALL * 0.7)
+          audio.noise(0.12, 0.16, 1400)
         }
 
         if (events.landed) {
@@ -155,17 +154,20 @@ const descent: GameModule = {
           finish('wrecked')
         }
 
-        // Out of fuel is only fatal once the drone has actually come down.
-        if (state.fuel <= 0 && state.phase === 'flying' && state.ship.vy > 6) {
-          juice.addTrauma(TRAUMA_SMALL)
-        }
+        updateView(view, state, {
+          thrusting: events.thrusting === true,
+          hardBurn,
+          groundEffect: events.groundEffect ?? 0,
+          scraped: events.scraped === true,
+          landed: events.landed !== undefined,
+          wrecked: events.wrecked !== undefined,
+        }, dt)
 
         input.endFrame()
         emitHud()
       },
-      render(alpha) {
-        updateCamera(camera, state, (1 / 120) * Math.max(alpha, 0.5))
-        render(ctx, state, camera, juice, size.width, size.height)
+      render() {
+        render(ctx, state, view, juice, size.width, size.height, hardBurn)
       },
     })
 

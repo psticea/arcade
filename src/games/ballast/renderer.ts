@@ -9,7 +9,7 @@ import {
   type BallastState,
 } from './simulation.ts'
 import { createPalette, samplePalette, css } from './art/palette.ts'
-import { createBloom, type Bloom } from './art/bloom.ts'
+import { createBloom, type Bloom } from '../../lib/bloom.ts'
 import { createStoneTexture, createBayAtlas, drawBells, drawTooth, drawWalls, type BayAtlas, type StoneTexture } from './art/cathedral.ts'
 import {
   createGrain,

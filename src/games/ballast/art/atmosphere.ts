@@ -2,7 +2,7 @@ import type { Rng } from '../../../lib/prng.ts'
 import { clamp } from '../../../lib/math.ts'
 import { SHAFT_WIDTH } from '../simulation.ts'
 import { css, shade, type Rgb } from './palette.ts'
-import { noise1 } from './noise.ts'
+import { noise1 } from '../../../lib/noise.ts'
 import { sx, sy, type Frame } from './frame.ts'
 
 /**

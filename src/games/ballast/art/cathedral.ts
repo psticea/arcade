@@ -2,7 +2,7 @@ import type { Rng } from '../../../lib/prng.ts'
 import { clamp } from '../../../lib/math.ts'
 import { SHAFT_WIDTH, SHOULDER_ABOVE, SHOULDER_BELOW, reachAt, type Obstacle } from '../simulation.ts'
 import { css, shade, GLASS_HUES, EMBER, type Rgb } from './palette.ts'
-import { hash2, hash3 } from './noise.ts'
+import { hash2, hash3 } from '../../../lib/noise.ts'
 import { sx, sy, depthAt, type Frame } from './frame.ts'
 
 /**

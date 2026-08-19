@@ -39,9 +39,11 @@ export function GameHost({ game, modeId, onExit }: Props) {
   const mode = game.modes.find((m) => m.id === modeId) ?? game.modes[0]
   const modeName = mode?.name ?? modeId
   const touch = useMemo(() => isTouchDevice(), [])
-  // Games with a d-pad need the playfield to end above the controls; the
-  // tap-anywhere games do not, since their control is the whole screen.
-  const showsPad = touch && game.touchKeys.length > 1
+  // Games with a cross d-pad need the playfield to end above the controls. The
+  // split layout tucks into the bottom corners instead, so it can overlay a
+  // full-height canvas — which matters most for the game that uses it, where
+  // vertical room is the thing being flown through.
+  const showsPad = touch && game.touchKeys.length > 1 && game.touchLayout !== 'split'
 
   // Mount the game module. Re-runs on restart via runKey.
   useEffect(() => {
@@ -167,6 +169,8 @@ export function GameHost({ game, modeId, onExit }: Props) {
           keys={game.touchKeys}
           actionLabel={game.actionLabel}
           tapAnywhere={game.touchKeys.length === 1}
+          layout={game.touchLayout}
+          labels={game.touchLabels}
           onPause={pressEscape}
         />
       )}

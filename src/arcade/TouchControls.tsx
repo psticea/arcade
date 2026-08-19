@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react'
-import type { ArcadeKey } from '../lib/types.ts'
+import type { ArcadeKey, GameDefinition } from '../lib/types.ts'
 import { holdKey, releaseKey } from './touch.ts'
 
 interface Props {
@@ -9,6 +9,8 @@ interface Props {
   actionLabel: string
   /** Games needing only SPACE turn the whole play area into a tap target. */
   tapAnywhere?: boolean
+  layout?: GameDefinition['touchLayout']
+  labels?: GameDefinition['touchLabels']
   onPause: () => void
 }
 
@@ -18,7 +20,7 @@ interface Props {
  * Buttons hold their key for as long as a finger is down, so thrust, flippers
  * and the plunger charge behave the same as on a keyboard.
  */
-export function TouchControls({ keys, actionLabel, tapAnywhere, onPause }: Props) {
+export function TouchControls({ keys, actionLabel, tapAnywhere, layout, labels, onPause }: Props) {
   const heldRef = useRef(new Set<ArcadeKey>())
 
   // A finger lifted outside its button would otherwise leave the key stuck down.
@@ -67,6 +69,8 @@ export function TouchControls({ keys, actionLabel, tapAnywhere, onPause }: Props
         <button type="button" className="touch-anywhere" {...bind('space')}>
           <span>TAP ANYWHERE TO {actionLabel}</span>
         </button>
+      ) : layout === 'split' ? (
+        <SplitControls uses={uses} bind={bind} labels={labels} actionLabel={actionLabel} />
       ) : (
         <div className="touch-pad">
           <div className="touch-dpad">
@@ -85,6 +89,53 @@ export function TouchControls({ keys, actionLabel, tapAnywhere, onPause }: Props
           )}
         </div>
       )}
+    </div>
+  )
+}
+
+type Binder = (key: ArcadeKey) => Record<string, unknown>
+
+/**
+ * Steering left, power right.
+ *
+ * A lander needs rotation and thrust at the same moment, and a cross d-pad
+ * cannot give you that: one thumb ends up covering two axes while the other
+ * reaches across the screen for the action button. Splitting the two roles
+ * across the bottom corners puts every control under a thumb that is already
+ * resting there, and lets the buttons be much larger than a cross allows.
+ */
+function SplitControls({
+  uses, bind, labels, actionLabel,
+}: {
+  uses: (key: ArcadeKey) => boolean
+  bind: Binder
+  labels: GameDefinition['touchLabels']
+  actionLabel: string
+}) {
+  return (
+    <div className="touch-split">
+      <div className="touch-steer">
+        {uses('left') && <button type="button" className="touch-round" {...bind('left')}>◀</button>}
+        {uses('right') && <button type="button" className="touch-round" {...bind('right')}>▶</button>}
+      </div>
+
+      <div className="touch-power">
+        {uses('down') && (
+          <button type="button" className="touch-minor" {...bind('down')}>
+            {labels?.tertiary ?? 'LOOK'}
+          </button>
+        )}
+        {uses('space') && (
+          <button type="button" className="touch-minor is-hot" {...bind('space')}>
+            {labels?.secondary ?? actionLabel}
+          </button>
+        )}
+        {uses('up') && (
+          <button type="button" className="touch-thrust" {...bind('up')}>
+            {labels?.primary ?? 'THRUST'}
+          </button>
+        )}
+      </div>
     </div>
   )
 }
