@@ -1,89 +1,28 @@
-import { useState, useCallback } from 'react'
-import { StartScreen } from './components/StartScreen.tsx'
-import { GameCanvas } from './components/GameCanvas.tsx'
-import { GameOverScreen } from './components/GameOverScreen.tsx'
-import type { GameState } from './game/gameState.ts'
-import type { DifficultyTier } from './game/difficulty.ts'
-import type { GameLanguage } from './game/wordManager.ts'
-import { updatePersonalBest, type PersonalBestResult } from './game/runStats.ts'
+import { useCallback, useState } from 'react'
+import { GamePicker } from './arcade/GamePicker.tsx'
+import { GameHost } from './arcade/GameHost.tsx'
+import type { GameDefinition } from './lib/types.ts'
 import './styles/theme.css'
 
-type Screen = 'start' | 'playing' | 'gameover'
+interface Session {
+  game: GameDefinition
+  modeId: string
+}
 
 export function App() {
-  const [screen, setScreen] = useState<Screen>('start')
-  const [finalState, setFinalState] = useState<GameState | undefined>(undefined)
-  const [gameKey, setGameKey] = useState(0)
-  const [startingDifficulty, setStartingDifficulty] = useState<DifficultyTier>('easy')
-  const [gameLanguage, setGameLanguage] = useState<GameLanguage>('english')
-  const [personalBest, setPersonalBest] = useState<PersonalBestResult | undefined>()
+  const [session, setSession] = useState<Session | undefined>(undefined)
 
-  const handleStart = useCallback((difficulty: DifficultyTier, language: GameLanguage) => {
-    setStartingDifficulty(difficulty)
-    setGameLanguage(language)
-    setGameKey((k) => k + 1)
-    setScreen('playing')
-    setFinalState(undefined)
-    setPersonalBest(undefined)
+  const start = useCallback((game: GameDefinition, modeId: string) => {
+    setSession({ game, modeId })
   }, [])
 
-  const handleGameOver = useCallback((state: GameState) => {
-    setPersonalBest(updatePersonalBest(
-      window.localStorage,
-      gameLanguage,
-      startingDifficulty,
-      state.score,
-    ))
-    setFinalState(state)
-    setScreen('gameover')
-  }, [gameLanguage, startingDifficulty])
-
-  const handleRestart = useCallback(() => {
-    setGameKey((k) => k + 1)
-    setScreen('playing')
-    setFinalState(undefined)
-    setPersonalBest(undefined)
-  }, [])
-
-  const handleHome = useCallback(() => {
-    setScreen('start')
-    setFinalState(undefined)
-    setPersonalBest(undefined)
-  }, [])
+  const exit = useCallback(() => setSession(undefined), [])
 
   return (
-    <>
-      {screen === 'start' && (
-        <StartScreen
-          initialDifficulty={startingDifficulty}
-          initialLanguage={gameLanguage}
-          onStart={handleStart}
-        />
-      )}
-      {screen === 'playing' && (
-        <GameCanvas
-          key={gameKey}
-          startingDifficulty={startingDifficulty}
-          language={gameLanguage}
-          onGameOver={handleGameOver}
-        />
-      )}
-      {screen === 'gameover' && finalState && (
-        <GameOverScreen
-          score={finalState.score}
-          wordsTyped={finalState.wordsTyped}
-          charactersTyped={finalState.charactersTyped}
-          wordsMissed={finalState.wordsMissed}
-          maxCombo={finalState.maxCombo}
-          elapsedTime={finalState.elapsedTime}
-          language={gameLanguage}
-          difficulty={startingDifficulty}
-          bestScore={personalBest?.bestScore ?? finalState.score}
-          isNewBest={personalBest?.isNewBest ?? false}
-          onRestart={handleRestart}
-          onHome={handleHome}
-        />
-      )}
-    </>
+    <main className="arcade">
+      {session
+        ? <GameHost game={session.game} modeId={session.modeId} onExit={exit} />
+        : <GamePicker onSelect={start} />}
+    </main>
   )
 }

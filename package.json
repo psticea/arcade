@@ -1,5 +1,5 @@
 {
-  "name": "word-fall",
+  "name": "arcade",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -25,3 +25,4 @@
     "vitest": "^2.1.0"
   }
 }
+
