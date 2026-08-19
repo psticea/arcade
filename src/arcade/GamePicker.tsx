@@ -140,8 +140,7 @@ export function GamePicker({ onSelect }: Props) {
           <p className="picker-hint">
             ← → cabinet{game.modes.length > 1 ? ' · ↑ ↓ mode' : ''} · SPACE insert coin
           </p>
-        )}
-      </div>
+        )}      </div>
     </div>
   )
 }

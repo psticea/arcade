@@ -4,6 +4,7 @@ import { getAudio, SFX } from '../lib/audio.ts'
 import { formatScore } from '../lib/math.ts'
 import { InitialsEntry } from './InitialsEntry.tsx'
 import { TouchControls } from './TouchControls.tsx'
+import { GameBriefing } from './GameBriefing.tsx'
 import { isTouchDevice, pressEscape } from './touch.ts'
 import { getScores, qualifies, submitScore, type ScoreEntry } from './scores.ts'
 import { dailySeed } from '../lib/prng.ts'
@@ -35,6 +36,9 @@ export function GameHost({ game, modeId, onExit }: Props) {
     getScores(window.localStorage, game.id, modeId))
   const [runKey, setRunKey] = useState(0)
   const [errorMessage, setErrorMessage] = useState('')
+  // The rules stay reachable mid-run, because the moment you need them is
+  // usually the moment you have just died to something you did not understand.
+  const [showHelp, setShowHelp] = useState(false)
 
   const mode = game.modes.find((m) => m.id === modeId) ?? game.modes[0]
   const modeName = mode?.name ?? modeId
@@ -102,6 +106,9 @@ export function GameHost({ game, modeId, onExit }: Props) {
   // Escape pauses; space resumes. Only active during play/pause.
   useEffect(() => {
     if (phase !== 'playing' && phase !== 'paused') return
+    // While the rules are open they own Escape, or one press would both close
+    // them and resume the game underneath.
+    if (showHelp) return
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.code === 'Escape') {
         event.preventDefault()
@@ -120,7 +127,7 @@ export function GameHost({ game, modeId, onExit }: Props) {
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [phase])
+  }, [phase, showHelp])
 
   // Game-over screen keys.
   useEffect(() => {
@@ -196,9 +203,22 @@ export function GameHost({ game, modeId, onExit }: Props) {
           <button type="button" className="overlay-button is-primary" onClick={pressEscape}>
             RESUME
           </button>
+          <button type="button" className="overlay-button" onClick={() => setShowHelp(true)}>
+            HOW TO PLAY
+          </button>
           <button type="button" className="overlay-button" onClick={onExit}>QUIT TO ARCADE</button>
           {!touch && <p className="overlay-hint">ESC resume</p>}
         </div>
+      )}
+
+      {phase === 'paused' && showHelp && (
+        <GameBriefing
+          game={game}
+          modeId={modeId}
+          startLabel="BACK TO PAUSE"
+          onStart={() => setShowHelp(false)}
+          onBack={() => setShowHelp(false)}
+        />
       )}
 
       {phase === 'initials' && result && (

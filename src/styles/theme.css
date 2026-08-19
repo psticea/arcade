@@ -751,6 +751,206 @@ body,
   background: rgba(255, 255, 255, 0.04);
 }
 
+/* ===================== Briefing ===================== */
+
+/*
+ * The one place a game is allowed to use words.
+ *
+ * Scrollable rather than fitted, because the content varies from one control
+ * line to four and squeezing all of it onto a phone screen would mean shrinking
+ * type past the point of being read — which would defeat the entire purpose.
+ */
+.briefing {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  /* Opaque, because this also opens over a live game canvas from the pause
+     menu, and reading rules through a running playfield is unreadable. */
+  background: rgba(3, 4, 10, 0.94);
+  backdrop-filter: blur(8px);
+  animation: fade-in 180ms ease;
+  padding:
+    calc(env(safe-area-inset-top, 0px) + 24px) 16px
+    calc(env(safe-area-inset-bottom, 0px) + 24px);
+}
+
+.briefing-card {
+  width: 100%;
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.briefing-head {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 4px;
+}
+
+.briefing-kicker {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 12px;
+  letter-spacing: 0.22em;
+  color: var(--accent);
+}
+
+.briefing-story {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text);
+}
+
+.briefing-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.briefing-label {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  color: var(--text-faint);
+}
+
+.briefing-goal {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text);
+  border-left: 2px solid var(--accent);
+  padding-left: 12px;
+}
+
+.briefing-ends,
+.briefing-tip {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+.briefing-tip {
+  padding: 12px 14px;
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 26%, transparent);
+  border-radius: 10px;
+}
+
+.briefing-tip strong {
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  margin-right: 8px;
+}
+
+.control-list,
+.scoring-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.control-list li {
+  display: grid;
+  /* A fixed key column keeps every action text starting on the same line,
+     which is what makes the set scannable rather than a wall of prose. */
+  grid-template-columns: 96px 1fr;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.control-key {
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  text-align: right;
+}
+
+.control-action {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+
+.control-hold {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-style: normal;
+  letter-spacing: 0.12em;
+  color: var(--text-faint);
+  vertical-align: 1px;
+}
+
+.scoring-list li {
+  position: relative;
+  padding-left: 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+.scoring-list li::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 8px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.7;
+}
+
+.briefing-actions {
+  display: flex;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.briefing-actions .overlay-button {
+  flex: 1;
+}
+
+.briefing-hint {
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: var(--text-faint);
+}
+
+@media (max-width: 420px) {
+  .control-list li {
+    grid-template-columns: 74px 1fr;
+    gap: 10px;
+  }
+
+  .briefing-story { font-size: 14px; }
+}
+
 /* ===================== Initials on touch ===================== */
 
 .initial-column {

@@ -69,6 +69,40 @@ export interface GameMode {
   description: string
 }
 
+/** One line of the controls table in a game's briefing. */
+export interface ControlLine {
+  /** The key, as the player sees it: 'â† â†’', 'SPACE', 'â†‘'. */
+  keys: string
+  /** The same control on a touch device, when it differs. */
+  touchKeys?: string
+  /** What it does, in plain language. */
+  action: string
+  /** Whether it is tapped or held — the difference is often the whole skill. */
+  hold?: boolean
+}
+
+/**
+ * The briefing shown before a game starts.
+ *
+ * Every game in this arcade is deliberately wordless while you play, which is
+ * good for the playing and terrible for the first thirty seconds. This is the
+ * one place the game is allowed to explain itself — so it has to be complete
+ * enough that nothing is a mystery, and short enough that it is actually read.
+ */
+export interface GameBriefing {
+  /** One or two sentences of fiction. Sets the tone, never the rules. */
+  story: string
+  /** What the player is trying to do, in one sentence. */
+  goal: string
+  /** How the run ends. Every distinct failure, because surprises are unfair. */
+  ends: string
+  /** How points are earned, most important first. */
+  scoring: string[]
+  controls: ControlLine[]
+  /** The one thing an expert knows that a beginner does not. */
+  tip?: string
+}
+
 /** Catalogue entry used by the picker. Loader is dynamic so games code-split. */
 export interface GameDefinition {
   id: string
@@ -95,5 +129,7 @@ export interface GameDefinition {
   touchLayout?: 'dpad' | 'split'
   /** Labels for the `split` layout's right-hand cluster. */
   touchLabels?: { primary: string; secondary?: string; tertiary?: string }
+  /** Goal, story, scoring and controls, shown before the game starts. */
+  briefing: GameBriefing
   load: () => Promise<{ default: GameModule }>
 }
